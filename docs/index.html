@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+    div.padded {
+      padding-top: 0px;
+      padding-right: 100px;
+      padding-bottom: 0.25in;
+      padding-left: 100px;
+    }
+  </style>
+<title>Aron Lloyd |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+<body>
+<br />
+<h1 align="middle">PathTracer II: The Render Ring</h1>
+    <h2 align="middle">Aron Lloyd</h2>
+
+    <div class="padded">
+
+    <h2 align="middle">Part 1: BOunces and Transittance</h2>
+        <p>To begin the highly anticipated Sequel to the latest Blockbuster <i>PathTracer</i>, we implemented the proper BSDF functions to describe perfectly specular, as well as glass materials.
+           We modelled after Snell's Law of refraction, and the reflection law. Recall that we earlier implemented a several bounce recursive ray tracing process. Below, we took advantage of this
+           to analyse our model and the pathways that the rays follow through the glass & mirror configurations.</p>
+        <div align="center">
+          <table style="width=100%">
+            <tr>
+              <td>
+                <img src="images/depth0.png" width="480px" />
+                <figcaption align="middle">Zero Bounces</figcaption>
+              </td>
+              <td>
+                <img src="images/depth1.png" width="480px" />
+                <figcaption align="middle">One Bounce</figcaption>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <p>Here, it is quite clear that zero bounces will light <b>nothing> in the scene</b>. Only the light source itself is visible, since it can radiate towards the camera without bouncing.
+           The first bounce elucidates where the light source blankets the scene. Since we are modelling ideally perfect specular reflection, you cannopt actually see anything bouncing from
+           the spheres themselves. In other words, there is only one infinitesimaly small point on each sphere that can bounce light directly back towards the camera, so it is not visible.</p>
+        <div align="center">
+          <table style="width=100%">
+            <tr>
+              <td>
+                <img src="images/depth2.png" width="480px" />
+                <figcaption align="middle">Two Bounces</figcaption>
+              </td>
+              <td>
+                <img src="images/depth3.png" width="480px" />
+                <figcaption align="middle">Three Bounces</figcaption>
+              </td>
+            </tr>
+          </table>
+          <figcaption align="middle">Five Bounces</figcaption>
+        </div>
+        <p>Now we can begin to understand the materials of the spheres. With two bounces available, we can see light bouncing off the box walls, reflecting off of the balls, then hitting the
+           camera. The glass ball (right) is fuzzy compared to the mirror ball (left) because of the Fresnel term reflecting only a proportion of the light that hits it. It isn't until the third
+           bounce that we can see "through" the glass; this is because the ray "entering" then "exiting" the glass both count as a bounce individually, therefore requiring a total of 3 bounces
+           minimum to hit the box, then transmit through the glass and hit the camera. Take notice how in the reflection of the mirror ball, the glass ball is still dark. With three bounces, the
+           reflection of the glass ball should look like the glass ball itself in the two bounce image, but this is not obvious since the latter is already still very dark. Anyways, images in
+           mirror ball's reflection are all 1 bounce behind the objects themselves.</p>
+        <div align="center">
+          <table style="width=100%">
+            <tr>
+              <td>
+                <img src="images/depth4.png" width="480px" />
+                <figcaption align="middle">Four Bounces</figcaption>
+              </td>
+              <td>
+                <img src="images/depth5.png" width="480px" />
+              </td>
+            </tr>
+          </table>
+        </div>
+        <p>We now begin to notice more subtle effects. The focuse light on the ground beneath the glass ball required an additional bounce. This light is directly from the source, transmitted
+           through the glass (2 bounces), then reflected off</p>
+        </div>
+        <div align="center">
+          <table style="width=100%">
+            <tr>
+              <td align="middle">
+                <img src="images/depth100.png" width="480px" />
+                <figcaption align="middle">100 Bounces in sum</figcaption>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+      <h2 align="middle">Part 2: MicroFac(ade) Materials</h2>
+        <p>Microfacet materials are approximations of specular surfaces with a roughness. We model the surface as a probability distribution of possible surface normals. With this, instead
+           of reflecting rays which intersect the surface, we sample the distribution for a surface normal to reflect about. We also include a term which attenuates to account for "Shadowing"
+           or the fact that some reflections of very rough surfaces will just intersect themselves again (high peaks/deep valleys). These approximate facades of how the surface ought to
+           truly look are terribly convincing.</p>
+         <p>Here is a showcase of 4 different magnitudes of surface reflectivity of a "gold" dragon. They are in order of increasing reflectivity (and noise lol).</p>
+         <div align="center">
+           <table style="width=100%">
+             <tr>
+               <td>
+                 <img src="images/drag5.png" width="480px" />
+                 <figcaption align="middle">BSDF Importance Sampling</figcaption>
+               </td>
+               <td>
+                 <img src="images/drag25.png" width="480px" />
+                 <figcaption align="middle">Cosine Hemisphere Sampling</figcaption>
+               </td>
+             </tr>
+             <br>
+             <tr>
+               <td>
+                 <img src="images/drag05.png" width="480px" />
+                 <figcaption align="middle">BSDF Importance Sampling</figcaption>
+               </td>
+               <td>
+                 <img src="images/drag005.png" width="480px" />
+                 <figcaption align="middle">Cosine Hemisphere Sampling</figcaption>
+               </td>
+             </tr>
+           </table>
+         </div>
+        <p>Time & time again, we have found that weighted importance sampling will converge much faster than random uniform sampling. This is almost analogous to checking your head before
+           searching the house for your glasses when lost. This should be a lesson of life. Here we replaced uniform cosine hemisphere sampling with importance sampling when choosing a
+           reflection direction from the surface of a microfacet material.</p>
+        <div align="center">
+          <table style="width=100%">
+            <tr>
+              <td>
+                <img src="images/bunnyImp.png" width="480px" />
+                <figcaption align="middle">BSDF Importance Sampling</figcaption>
+              </td>
+              <td>
+                <img src="images/bunnyCos.png" width="480px" />
+                <figcaption align="middle">Cosine Hemisphere Sampling</figcaption>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <p>While both results are correct, it is obvious that one out of the two images is far less noisy; i.e. it has converged closer to the truth relative to the other. The virtue of
+           importance sampling has again shown itself, quite naturally. If we increased the sampling rate in the case of uniform cosine hemisphere sampling, it would eventually reach an
+           equal magnitude of quality as the first image; just that it would take <b>much</b> longer.</p>
+        <div align="center">
+          <table style="width=100%">
+            <tr>
+              <td>
+                <img src="images/Chrome.png" width="480px" />
+                <figcaption align="middle">Chrome Dragon</figcaption>
+             </td>
+            </tr>
+          </table>
+        </div>
+        <p>Here is a lovely expression of our microfacet model. Here I have rendered the same model of a dragon, except with parameters representative of Chromium atoms.</p>
+
+      <h2 align="middle">Part 3: Light from the Outer Worlds</h2>
+        <p>Here, we have explicitly decided on our own will, to take it upon ourselves, to design and introduce a model of a background environment and the lighting that
+           comes from it. There is a familiar level of realism which emerges from this development; rarely do we not experience lighting from the sun in our everyday
+           situations. The light from this model is approximated as infinitely far away, simplifying our calculations. To showcase the mechanism, I have prepared
+           a set of representative images, all using a single environment image. This said image is immediately below.</p>
+        <div align="center">
+          <table style="width=100%">
+            <tr>
+              <img src="images/doge.jpg" width="480px" />
+              <figcaption align="middle">The world around us!</figcaption>
+            </tr>
+          </table>
+        </div>
+        <p>To render it, of course we must sample it. If your sampling something, we might as well smaple the important parts. Since we are on a never ending journey
+           proving <b>Importance Sampling</b> as owning ultimate dominance over uniform sampling, we again showcase how utterly inferior the uniform case is in
+           comparison; because that is always a satisfying accomplishment. Before we get to belittling, below I present an image representative of the <b>Cumulative
+           Probability Distribution Functions</b> in a direct mapping to the above image of our environment image. To be clear, the probability is of how likely
+           we are to sample that point on the actual image of our environment, and is weighted more importantly where the light is sourcing from.</p>
+        <div align="center">
+          <table style="width=100%">
+            <tr>
+              <img src="images/prob.png" width="480px" />
+              <figcaption align="middle">The cumulative distribution of Probability</figcaption>
+            </tr>
+          </table>
+        </div>
+        <p>Here above, the derivative (of color change w.r.t. position) is proportional to the intensity of light source. We visually draw the connections between
+           the busy changes in our probability distribution image near the upper center, and the relatively complicated, but bright portion of our environment map.
+           That, and there is the strong change from black->green->red on the entire upper portion, indicated of the sky's brightness.</p>
+        <p>Here we tower Importance Sampling along side uniform spherical sampling</p>
+        <div align="center">
+          <table style="width=100%">
+            <tr>
+              <td>
+              <img src="images/Impbun.png" width="480px" />
+              <figcaption align="middle">Very Important Sampling</figcaption>
+            </td>
+            <td>
+              <img src="images/Hembun.png" width="480px" />
+              <figcaption align="middle">Less Important, Actually Uniform Sampling</figcaption>
+            </td>
+            </tr>
+          </table>
+        </div>
+        <p>Alright, here the difference is not so drastic. The environment we chose is somewhat gloomy and dim, so there is not a lot to improve on. Nonetheless,
+           if one has a keen eye, there are differences, being that the uniform sampling is generally fuzzier on the bunny which is indicative of not having
+           converged quite as closely as the importance sampling achieved. Let's try it again, but with a more reflective bunny rabbit.</p>
+           <div align="center">
+             <table style="width=100%">
+               <tr>
+                <td>
+                 <img src="images/bunImp.png" width="480px" />
+                 <figcaption align="middle">Very Important Sampling</figcaption>
+               </td>
+               <td>
+                 <img src="images/bunHemi.png" width="480px" />
+                 <figcaption align="middle">Less Important, Actually Uniform Sampling</figcaption>
+                </td>
+               </tr>
+             </table>
+           </div>
+           <p>Yes, here we can see it more clearly. Notice the more define clarity of the environments image on the bunny who underwent the more important
+              sampling.</p>
+        <h2 align="middle">Part 4: Depth to Our Story</h2>
+          <p>Here, we have explicitly decided on our own will, to take it upon ourselves, to design and introduce a model of a background environment and the lighting that
+             comes from it. There is a familiar level of realism which emerges from this development; rarely do we not experience lighting from the sun in our everyday
+             situations. The light from this model is approximated as infinitely far away, simplifying our calculations. To showcase the mechanism, I have prepared
+             a set of representative images, all using a single environment image. This said image is immediately below.</p>
+          <div align="center">
+            <table style="width=100%">
+              <tr>
+                <img src="images/doge.jpg" width="480px" />
+                <figcaption align="middle">The world around us!</figcaption>
+              </tr>
+            </table>
+          </div>
+
+
+</div>
+</body>
+</html>

@@ -30,11 +30,7 @@ b44da94 16 hours ago
 	void main(void) {
     float blr = 0.1/4.0;
     float stp = 10.0;
-		float pix = .2*texture(tex1,vec2(gl_FragCoord.x,gl_FragCoord.y)/512.0).w
-    +blr*texture(tex1,vec2(gl_FragCoord.x+stp,gl_FragCoord.y+stp)/512.0).w
-    +blr*texture(tex1,vec2(gl_FragCoord.x+stp,gl_FragCoord.y-stp)/512.0).w
-    +blr*texture(tex1,vec2(gl_FragCoord.x-stp,gl_FragCoord.y+stp)/512.0).w
-    +blr*texture(tex1,vec2(gl_FragCoord.x-stp,gl_FragCoord.y-stp)/512.0).w;
+		float pix = .2*texture(tex1,vec2(gl_FragCoord.x,gl_FragCoord.y)/512.0).w;
     //float c = smoothstep(.7,.95,sin(gl_FragCoord.x/5.0))+smoothstep(.7,.95,sin(gl_FragCoord.y/5.0));
     //color = vec4(c*pix,c*pix,c*pix,1.0);
     color = vec4(pix,pix,pix,.05);
@@ -50,6 +46,7 @@ b44da94 16 hours ago
 
 <script type="text/javascript">
   var gl;
+  const N = 64;
 	var tex_framebuffer;
 	var SVAO, SL;
 	var start_time =  new Date().getTime(); var last_rend_time = 0;
@@ -62,16 +59,16 @@ b44da94 16 hours ago
   var p = 113;
   var potential_sum = 0.0;
   var origin = [N / 2, N / 2];
-  var candidate_sites = [[N / 2 - 1, N / 2], [N / 2, N / 2 - 1]
-  [N / 2 - 1, N / 2 - 1], [N / 2 - 1, N / 2 + 1], [N / 2 + 1, N / 2 - 1],
-  [N / 2 + 1, N / 2 + 1], [N / 2 + 1, N / 2], [N / 2, N / 2 + 1]];
 
-  var potentials = {}; // from hash key of candidate position to potential of that position
 
-dict[key(obj1)] = obj1;
-dict[key(obj2)] = obj2;
+  var charges = {}; // hashmap from negative charges to potential of that position
+
+  var dict = {}; // hashmap from candidate positions to potentials
 
 function init() {
+  var candidate_sites = [[N / 2 - 1, N / 2], [N / 2, N / 2 - 1],
+  [N / 2 - 1, N / 2 - 1], [N / 2 - 1, N / 2 + 1], [N / 2 + 1, N / 2 - 1],
+  [N / 2 + 1, N / 2 + 1], [N / 2 + 1, N / 2], [N / 2, N / 2 + 1]];
       pixel[(N / 2) * N + N / 2] = 255;
       for (var k = 0; k < 8; k++) {
         var pair = candidate_sites[k];
@@ -80,7 +77,7 @@ function init() {
       }
   }
 
-hash_position(i, j) {
+function hash_position(i, j) {
       // Hash a 2D position into a unique float identifier
            // that represents membership in some 2D pixel volume.
 
@@ -90,19 +87,36 @@ hash_position(i, j) {
       return hash_num;
   }
 
-  get_position(hash_key) {
-    return [floor(hash_key / p) % p, floor(hash_key / p / p) % p];
+function get_position(hash_key) {
+    return [Math.floor(hash_key / p) % p, Math.floor(hash_key / p / p) % p];
   }
 
-function r(i, j) {
-  return sqrt((i - N / 2) * (i - N / 2) + (j - N / 2) * (j - N / 2));
+function r(i, j, i2, j2) {
+  return Math.sqrt((i - i2) * (i - i2) + (j - j2) * (j - j2));
 }
 
-function update_potential(i,j) {
-  if (hash_position(i, j) in dict) {
+function update_dict(i,j) {
+  var k = hash_position(i, j);
+  if (!(k in dict) && !(pixel[i * (N - 1) + j] == 255)) {
+    dict[k] = 0.0;
+    for (key in dict) {
+      var pair = get_position[key];
+      i2 = get_position[0];
+      j2 = get_position[1];
+      dict[k] += 1 - R1 / r(i, j, i2, j2);
+    }
+    potential_sum += dict[k];
+  }
 
+}
+
+function update_potential(i,j,i0,j0) {
+  var k = hash_position(i, j);
+  if (k in dict) {
+      dict[k] += 1 - R1 / r(i, j, i0, j0);
+      potential_sum += dict[k] += 1 - R1 / r(i, j, i0, j0);
   } else {
-    
+    // error ????
   }
 
 }
@@ -110,27 +124,37 @@ function update_potential(i,j) {
     var u = u01() * potential_sum;
     var c = 0.0;
     var i, j;
-    for key in dict {
+
+    for (key in dict) {
       c += dict[key];
       if (c > u) {
-        var pair = get_position[hash_key];
+        var pair = get_position[key];
         i = get_position[0];
         j = get_position[1];
         break;
       }
     }
+
     pixel[i * (N - 1) + j] = 255;
     delete dict[hash_position(i, j)];
-    update_potential(i-1,j);
-    update_potential(i-1,j-1);
-    update_potential(i-1,j+1);
-    update_potential(i,j-1);
-    update_potential(i,j+1);
-    update_potential(i+1,j-1);
-    update_potential(i+1,j);
-    update_potential(i+1,j+1);
+    update_dict(i-1,j);
+    update_dict(i-1,j-1);
+    update_dict(i-1,j+1);
+    update_dict(i,j-1);
+    update_dict(i,j+1);
+    update_dict(i+1,j-1);
+    update_dict(i+1,j);
+    update_dict(i+1,j+1);
+
+    for (key in dict) {
+      var pair = get_position[key];
+      i1 = get_position[0];
+      j1 = get_position[1];
+      update_potential(i1,j1,i,j)
+    }
 
   }
+
   function drawScene() {
     t = (new Date().getTime() - start_time)/1000.0;
     mc();
@@ -167,7 +191,7 @@ function update_potential(i,j) {
 	function loadShaders() {
     sh_draw_tex = make_shader("vert_pass","frag_draw_tex");
 	}
-  const N = 64;
+
   const pixel = new Uint8Array(N*N);
 	function loadTextures() {
 		gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex1);

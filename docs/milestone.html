@@ -12,6 +12,7 @@
 <title>Aron Lloyd |  CS 184</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
 </head>
 <body>
 <br>
@@ -22,56 +23,80 @@
 
 
     <div class="padded">
-    <h2 align="middle">Summary</h2>
-      <p>  The goal of our project is to make a simulation of fire that is as realistic as possible.
-        We plan to study and use the generic method of physically modeling a system of interacting particles in order to acheive this,
-        which involves solving the relevant PDEs numerically in order to predict the dynamics of the system.
-        We also hope to explore other alternatives to a physically based rendering -- in particular we may try to exploit
-        the dynamics exhibited by certain simplified probabilistic models in their "scaling limits", in order to
-        render fire in a way that is not physically based but is visually appealing.</p>
-    <h2 align="middle">Background and Problem Description</h2>
-      <p>The phenomenon of fire, like most natural processes, can be complicated to describe and intricate geometrically. Thus, if one wants to
-         render convincing looking fire on a computer graphics display, a non-trivial approach must be adopted. In general, fluid dynamics are described by the
-         Navier-Stokes equations. As analytically solving Navier-Stokes is intractable, numerical methods are generally used to integrate the PDE.
-         We believe that similar techniques will need to be used for fire simulation, although the dynamics may be more complicated.
-         Additionally, a traditional mesh would be inefficient to modulate in time in accordance with the dynamics of the system, thus we must caste the solution
-         into a more suitable framework.</p>
-         <p>As mentioned in the summary, we may try a different method to integrate the PDE governing the dynamics of the system. 
-           There are probabilistic models from statistical mechanics which are closely related to systems of interacting particles, 
-           such as ASEP (Asymmetric Simple Exclusion Process), that exhibit "universal" behavior in their 
-           thermodynamic limits. This, very roughly, means that the limiting dynamics of certain simple and solvable models
-          are closely related to the dynamics of much more complicated (intractable) models. Furthermore,
-          if we can find a model whose dynamics are governed by the same PDE as fire, then it is possible that by perturbing it slightly
-          and then simulating this perturbed model and rendering it in a certain way we could get something which looks a lot like fire.
-          This technique, although difficult, would very much be in the spirit of the course, as these models of statistical mechanics usually involve
-          a lattice that approximates a continuous domain in some scaling limit, which is very reminiscint of all of the techniques
-          used in graphics to approximate smooth surfaces and objects with discrete data.
-         </p>
+    <h2 align="middle">Progress Summary</h2>
+      <p>  The goal of our project is to make a simulation of fire that is as realistic as possible,
+        but also innovative and efficient.
+        One of our main goals was to experiment with new ways of rendering fire that circumvent the approximate
+        (numerical) integration of PDEs, expensive
+         grid sampling techniques, and complicated
+        ray tracing techniques to render the fire realistically.
+        One way we hoped to do this was to try to exploit
+        the dynamics exhibited by certain simplified probabilistic lattice models
+        in their "scaling limits", or in other words as the granularity of the lattice approaches
+        a continuum. In our explorations thus far, we have created a 2-dimensional rendering of fire
+        using a probabilistic model for the propogation of the flame.</p>
 
-      <h2 align="middle">Goals and Delivarbles</h2>
-        <p>Our central goal for the project is to create a very realistic simulation of fire. We propose to first implement an engine to simulate the dynamics of combustion.
-          We will investigate primarily 2, but possibly other,
-           established techniques of doing this. We will numerically calculate the solutions to PDEs 
-           which describe the motion of gaseous densities, thus giving us a description of fire to display with a rendering engine.
-           We expect that along the way we will generally be challenged to understand
-           the theoretical frameowork for modeling fire, and that also we will run into many difficulties related to 
-           the numerical integration of PDEs, as this is generally a very tricky thing to do.
-           To measure the quality of the system we will observe the smoothness and fluidity of the simulation and compare it to real fire.
-           Our base deliverable would be a simple video showing our simulation along with a high level overview of the math behind it,
-           as well as the essential aspects of our implementation. We expect that obtaining a simulation that runs with 
-           reasonable efficiency will be a difficult task. If we can obtain something that can be rendered in real time, that would 
-           be a major success for the project.
-            
-           </p>
-        <p>If we are exceptionally fast, we hope to explore the probabilistic method. Also, we hope to try to
-           create an applet with a simple user interface that can be used to display our simulation in an interactive way.
-           We could have the user click the screen start a fire, and then they could watch it burn or maybe even (if we 
-           are even more ambitious) spread across a room.
-          Other aspirations we have include implementing refraction from the heat against a background, and modeling the spread of fire so that
-           our simulation is not purely stationary.
 
+      <h2 align="middle">The Algorithm</h2>
+        <p> The model we have is a markov chain on a finite N x N lattice,
+        inspired by lattice models in statistical mechanics, such as the ising model and
+        abelian sandpile model. In the algorithm below, i is a vertical coordinate
+        (going upwards)
+        and j is a horizontal coordinate (ie (j, i) are is a discrete sample of (x, y)-space).</p>
+
+          <ol>
+            <li>Iniitialize an N by N texture 'pixel' with bottom sites (source) at max brightness.
+              Array elements can either be 'on' or 'off', which we denote by 1, or 0.
+                Initialize parameters b, s, r > 0 such that  0 < s < 1, 0 < s r < 1, and 0 < b s r < 1
+                (these will be used as coin flip probabilities). For simplicity, set
+                p = s r; set q = b s r.
+            </li>
+
+            <li>(Imagine the pixel squares as a chess board). First iterate over each
+              white square (i, j) in the texture.
+              <ul>
+                <li>
+                  Case 1 - (i, j) is 'off': then
+                  <ul>
+                    <li>
+                       If pixel(i-1, j) is 'on', set (i, j) to 'on' with probability q
+                    </li>
+                      <li>
+                         Iterate through other neighbors (i', j'). If
+                         (i', j') is on, set (i, j) to 'on' with probability p.
+                      </li>
+
+                    </ul>
+
+
+                  </li>
+
+                <li>
+                  Case 2 - (i, j) is 'on': then iterate through each neighbor (i', j'),
+                  and if (i', j') is off, set (i, j) to off with probability s.
+                </li>
+              </ul>
+
+            Reapeat this for the black squares</li>
+
+            <li>Repeat step 2.</li>
+
+          </ol>
+
+
+
+
+    <h2 align="middle">Brief Analysis</h2>
+      <p>
         </p>
-    <h2 align="middle">Schedule</h2>
+
+        <p>
+
+
+
+           </p>
+
+    <h2 align="middle">Updated Plan</h2>
       <p> Week 1: Finish assignment 4, and decide whether to use this project as skeleton code for our fire simulation.
           Also in week 1, we plan to read relevant references on the subject and study existing implementations.
       </p>
@@ -87,12 +112,13 @@
         causing light to bend in unusual ways.
       </p>
 
-    <h2 align="middle">Resources</h2>
-      <ol>
-        <li>http://physbam.stanford.edu/~fedkiw/papers/stanford2002-02.pdf</li>
-        <li>http://physbam.stanford.edu/~fedkiw/papers/stanford2003-11.pdf</li>
-        <li>Assignment 4 as a baseline</li>
-      </ol>
+
+      <h2 align="middle">Video and Slides</h2>
+
+      <p> https://youtu.be/WVXxh6fpPmk </p>
+
+      <p> https://docs.google.com/presentation/d/1s6Y9cAHmfZ7fpVpd2CDm2EfvZVQLYk-QJ-gpZcCkMCk/edit?usp=sharing </p>
+
 
 </div>
 </body>

@@ -37,7 +37,7 @@ b44da94 16 hours ago
     +blr*texture(tex1,vec2(gl_FragCoord.x-stp,gl_FragCoord.y-stp)/512.0).w;
     //float c = smoothstep(.7,.95,sin(gl_FragCoord.x/5.0))+smoothstep(.7,.95,sin(gl_FragCoord.y/5.0));
     //color = vec4(c*pix,c*pix,c*pix,1.0);
-    color = vec4(pix,pix/6.0,pix/6.0,.05);
+    color = vec4(pix,pix,pix,.05);
     return;
 	}
 </script>
@@ -58,6 +58,7 @@ b44da94 16 hours ago
 	var screen_size = 512;
   var t = 0;
   var R1 = 0.5;
+  var R2 = N / 2;
   var p = 113;
   var potential_sum = 0.0;
   var origin = [N / 2, N / 2];
@@ -93,22 +94,42 @@ hash_position(i, j) {
     return [floor(hash_key / p) % p, floor(hash_key / p / p) % p];
   }
 
+function r(i, j) {
+  return sqrt((i - N / 2) * (i - N / 2) + (j - N / 2) * (j - N / 2));
+}
+
 function update_potential(i,j) {
+  if (hash_position(i, j) in dict) {
+
+  } else {
+    
+  }
 
 }
   function mc() {
     var u = u01() * potential_sum;
     var c = 0.0;
-    for key in dict{
-      if (c > dict[key]) {
+    var i, j;
+    for key in dict {
+      c += dict[key];
+      if (c > u) {
         var pair = get_position[hash_key];
-        var i = get_position[0];
-        var j = get_position[1];
+        i = get_position[0];
+        j = get_position[1];
+        break;
       }
-      dict[key] = i+1;
-      i++;
-      if i==10{break;}
     }
+    pixel[i * (N - 1) + j] = 255;
+    delete dict[hash_position(i, j)];
+    update_potential(i-1,j);
+    update_potential(i-1,j-1);
+    update_potential(i-1,j+1);
+    update_potential(i,j-1);
+    update_potential(i,j+1);
+    update_potential(i+1,j-1);
+    update_potential(i+1,j);
+    update_potential(i+1,j+1);
+
   }
   function drawScene() {
     t = (new Date().getTime() - start_time)/1000.0;

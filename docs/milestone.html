@@ -72,13 +72,21 @@
                   </li>
 
                 <li>
-                  Case 2 - (i, j) is 'on': then iterate through each neighbor (i', j'),
+                  Case 2 - pixel(i, j) is 'on': then iterate through each neighbor (i', j'),
                   and if (i', j') is off, set (i, j) to off with probability s.
                 </li>
               </ul>
 
             Reapeat this for the black squares</li>
-
+            <li>Suppose we have a pixel (i, j) corresponding to the texel (i, j)
+              (by abuse of notation). Then, in the fragment shader,
+              we set the color of (i, j) to
+              $$0.2 * 255 * pixel(i, j) +
+              0.25 * 255 * pixel(i + 10, j) +
+              0.25 * 255 * pixel(i - 10, j) +
+              0.25 * 255 * pixel(i, j - 10) +
+              0.25 * 255 * pixel(i, j + 10) $$
+            </li>
             <li>Repeat step 2.</li>
 
           </ol>
@@ -87,14 +95,21 @@
 
 
     <h2 align="middle">Brief Analysis</h2>
-      <p>
+        <p>
+          At each step, the algorithm iterates through all N^2 texels in the texture,
+          so each update step is N^2 time, where N is the width and height of the texture.
         </p>
 
         <p>
-
-
-
-           </p>
+          Why might this have any hope of making realistic-looking fire? Well, proving
+          anything would be difficult, but we can give an extremely rough explanation of why this
+          may be. The physical process of fire burning is, roughly speaking, a local process,
+          meaning that the time evolution of a point in space only depends on data
+          coming from points that are nearby. Furthermore, it should be, roughly,
+          second order in space, and we attempt to caputre this by
+          making each pixel's update a function of its four
+          nearest neighbors.
+        </p>
 
     <h2 align="middle">Updated Plan</h2>
       <p>In the next two weeks we plan on taking two different approaches. Our first approach is taking what we have and making it better. Our ideas currently are to make the fire simulation three dimensional and change the color of the fire. Other aspirations include smoke or other fire effects. Since the model we have currently is based more on a randomness and a probabilistic algorithm, we want to see if we can implement a different method of fire rendering based on physical equations. This second approach would not be a real time simulation, but rather one in which we attempt to render fire using ray tracing and see how realistic we can get it. </p>

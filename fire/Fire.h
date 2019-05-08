@@ -1,0 +1,70 @@
+//
+// Created by Matthew Nicoletti on 2019-05-07.
+//
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <algorithm>
+#include <string>
+#include <vector>
+#include <cmath>
+
+#ifndef FIRE_FIRE_H
+#define FIRE_FIRE_H
+
+#include "Eigen/Eigen/Dense"
+
+using namespace Eigen;
+
+using namespace std;
+
+
+class Fire {
+    double S; // Parameter controlling velocity of front propogation
+    double dt; // size of time steps
+    double h; // grid spacing
+    double Tair; // temperature of ambient environment
+    double alpha; // positive constant
+    double eps;
+    int N; // Size of grid: grid will be 4 N by N by N (4 because we have 4 quantities to keep track of)
+    vector<double> grid; // grid with implicit surface, temp, density, pressure at current time step
+    vector<double> newGrid; // grid with implicit surface, temp, density, pressure at next time step
+
+    vector<double> velNewX; // array with x-coordinate of velocities defined across faces of 'grid'
+    vector<double> velNewY; // array with y-coordinate of velocities defined across faces of 'grid'
+    vector<double> velNewZ; // array with z-coordinate of velocities defined across faces of 'grid'
+
+    vector<double> velX; // array with x-coordinate of velocities defined across faces of 'grid'
+    vector<double> velY; // array with y-coordinate of velocities defined across faces of 'grid'
+    vector<double> velZ; // array with z-coordinate of velocities defined across faces of 'grid'
+
+    // centered velocities
+    vector<double> velCX; // array with x-coordinate of velocities defined across faces of 'grid'
+    vector<double> velCY; // array with y-coordinate of velocities defined across faces of 'grid'
+    vector<double> velCZ; // array with z-coordinate of velocities defined across faces of 'grid'
+
+
+    void update();
+
+    void propogateFront(double w1, double w2, double w3);
+
+    double norm(double x, double y, double z);
+
+    void flow();
+
+    void advect(vector<double> &arr, vector<double> &arrOld);
+
+    double triLerp(int x, int y, int z, double dx, double dy, double dz, vector<double> &arr);
+
+    void addForce();
+
+    Vector3d vort(int i, int j, int k);
+
+
+
+
+
+};
+
+
+#endif //FIRE_FIRE_H

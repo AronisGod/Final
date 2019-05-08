@@ -45,7 +45,8 @@ Skip to content
 function mutate(i,j) {
   var ratio  = .61;
   var speed = .32;
-  var vert_ratio = 10;
+  var vert_ratio = 4;
+  
   if ( pixel[((i)*N+j)] == 0) {
     if (pixel[((i-1)*N+j)] > 0 && u01() < vert_ratio*speed*ratio * (N - i) * 1.0 /N ) pixel[(i*N+j)] = 255;
     else if (pixel[((i+1)*N+j)] > 0 && u01() < speed*ratio ) pixel[(i*N+j)] = 255;
@@ -57,6 +58,8 @@ function mutate(i,j) {
     else if (pixel[((i)*N+j+1)] == 0 && u01() < speed ) pixel[(i*N+j)] = 0;
     else if (pixel[((i)*N+j-1)] == 0 && u01() < speed ) pixel[(i*N+j)] = 0;
   }
+
+
   if ( i == 1 && ( j > 20 && j < 44 ) ) {
     pixel[((i)*N+j)] = 255;
   }

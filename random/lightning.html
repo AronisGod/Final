@@ -1,20 +1,4 @@
-Skip to content
 
-Search or jump to…
-
-Pull requests
-Issues
-Marketplace
-Explore
-
-@mnicoletti15
-0
-0 0 LittleBadger/LittleBadger.github.io
- Code  Issues 0  Pull requests 0  Projects 0  Wiki  Insights
-LittleBadger.github.io/isingFire.html
-@LittleBadger LittleBadger Add files via upload
-b44da94 16 hours ago
-242 lines (192 sloc)  7.2 KB
 
 <html>
 <head>
@@ -46,7 +30,8 @@ b44da94 16 hours ago
 
 <script type="text/javascript">
   var gl;
-  const N = 64;
+  const N = 512;
+  const eta = 90.0;
 	var tex_framebuffer;
 	var SVAO, SL;
 	var start_time =  new Date().getTime(); var last_rend_time = 0;
@@ -74,6 +59,11 @@ function init() {
         var pair = candidate_sites[k];
         var i = pair[0];
         var j = pair[1];
+        update_dict(i, j);
+        update_potential(i, j, N / 2, N / 2);
+      }
+      for (key in dict) {
+        potential_sum += Math.pow(dict[key], eta);
       }
   }
 
@@ -82,30 +72,35 @@ function hash_position(i, j) {
            // that represents membership in some 2D pixel volume.
 
 
-      var hash_num = (i * p) +
-                       j * p * p;
+      var hash_num = i * N  + j;
       return hash_num;
   }
 
 function get_position(hash_key) {
-    return [Math.floor(hash_key / p) % p, Math.floor(hash_key / p / p) % p];
+    return [Math.floor(hash_key / N), hash_key % N];
   }
 
-function r(i, j, i2, j2) {
+function r(i, j, i2, j2, message) {
+  if ((i - i2) * (i - i2) + (j - j2) * (j - j2) < 0.01) {
+    return ;
+  }
   return Math.sqrt((i - i2) * (i - i2) + (j - j2) * (j - j2));
 }
 
 function update_dict(i,j) {
   var k = hash_position(i, j);
-  if (!(k in dict) && !(pixel[i * (N - 1) + j] == 255)) {
+  if (!(k in dict) && !(pixel[i * N + j] == 255)) {
     dict[k] = 0.0;
     for (key in dict) {
-      var pair = get_position[key];
-      i2 = get_position[0];
-      j2 = get_position[1];
-      dict[k] += 1 - R1 / r(i, j, i2, j2);
+      if (key == k) {
+        continue;
+      }
+      var pair = get_position(key);
+      i2 = pair[0];
+      j2 = pair[1];
+      dict[k] += 1 - R1 / r(i, j, i2, j2, "initializer");
     }
-    potential_sum += dict[k];
+
   }
 
 }
@@ -113,29 +108,30 @@ function update_dict(i,j) {
 function update_potential(i,j,i0,j0) {
   var k = hash_position(i, j);
   if (k in dict) {
-      dict[k] += 1 - R1 / r(i, j, i0, j0);
-      potential_sum += dict[k] += 1 - R1 / r(i, j, i0, j0);
+      dict[k] += 1 - R1 / r(i, j, i0, j0, "updater");
   } else {
     // error ????
   }
 
 }
-  function mc() {
+function mc() {
     var u = u01() * potential_sum;
     var c = 0.0;
     var i, j;
 
+
+
     for (key in dict) {
-      c += dict[key];
+      c += Math.pow(dict[key], eta);
       if (c > u) {
-        var pair = get_position[key];
-        i = get_position[0];
-        j = get_position[1];
+        var pair = get_position(key);
+        i = pair[0];
+        j = pair[1];
         break;
       }
     }
 
-    pixel[i * (N - 1) + j] = 255;
+    pixel[i * N + j] = 255;
     delete dict[hash_position(i, j)];
     update_dict(i-1,j);
     update_dict(i-1,j-1);
@@ -146,11 +142,13 @@ function update_potential(i,j,i0,j0) {
     update_dict(i+1,j);
     update_dict(i+1,j+1);
 
+    potential_sum = 0.0;
     for (key in dict) {
-      var pair = get_position[key];
-      i1 = get_position[0];
-      j1 = get_position[1];
+      var pair = get_position(key);
+      i1 = pair[0];
+      j1 = pair[1];
       update_potential(i1,j1,i,j)
+      potential_sum += Math.pow(dict[key], eta);
     }
 
   }

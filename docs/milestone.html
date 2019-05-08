@@ -24,46 +24,48 @@
 
     <div class="padded">
     <h2 align="middle">Progress Summary</h2>
-      <p>  The goal of our project is to make a simulation of fire that is as realistic as possible,
-        but also innovative and efficient.
-        One of our main goals was to experiment with new ways of rendering fire that circumvent the approximate
-        (numerical) integration of PDEs, expensive
-         grid sampling techniques, and complicated
-        ray tracing techniques to render the fire realistically.
+      <p>  We aimed to construct an algorithm which can model the dynamics of fire for rendering purposes.
+        Fire is a chaotic an unruly natural process, which can be difficult to simulate on the rectangular framework of
+        numerical computations.
+        We experimented with ways of rendering fire that circumvent the expensive
+        (numerical) integration of PDEs,
+         grid sampling, and complicated
+        ray tracing techniques.
         One way we hoped to do this was to try to exploit
         the dynamics exhibited by certain simplified probabilistic lattice models
-        in their "scaling limits", or in other words as the granularity of the lattice approaches
-        a continuum. In our explorations thus far, we have created a 2-dimensional rendering of fire
-        using a probabilistic model for the propogation of the flame.</p>
+        in their "scaling limits"; or in other words, as the granularity of the lattice approaches
+        a continuum. As a result of our initial trajectory, we have thus far created a 2-dimensional rendering of fire
+        using simple probabilistic update rules for the propogation of the flame. Simplicity was prioritized so we could achieve real-time animation.
+        This was also the motivation for using a shader for GPU computations.
+        We describe this achievement below.</p>
 
 
       <h2 align="middle">The Algorithm</h2>
-        <p> The model we have is a markov chain on a finite N x N lattice,
+        <p> The model is a markov chain on a N x N lattice;
         inspired by lattice models in statistical mechanics, such as the ising model and
         abelian sandpile model. In the algorithm below, i is a vertical coordinate
-        (going upwards)
-        and j is a horizontal coordinate (ie (j, i) are is a discrete sample of (x, y)-space).</p>
+        and j is a horizontal coordinate, where (0,0) is the bottom left corner (i.e. (j, i) is a discrete sample of (x, y)-space).</p>
 
           <ol>
-            <li>Iniitialize an N by N texture 'pixel' with bottom sites (source) at max brightness.
-              Array elements can either be 'on' or 'off', which we denote by 1, or 0.
-                Initialize parameters b, s, r > 0 such that  0 < s < 1, 0 < s r < 1, and 0 < b s r < 1
-                (these will be used as coin flip probabilities). For simplicity, set
-                p = s r; set q = b s r.
+            <li>Iniitialize an N by N array into variable 'pixel'.
+                Array elements can either be 'on' or 'off', which we denote by 1, or 0.
+                Set all bottom sites (where i=0) to 'on'; this is the "source" of our flame.
+                Initialize parameters p, q, s within the range [0,1] exclusive
+                (these will be used as coin flip probabilities).
             </li>
 
             <li>(Imagine the pixel squares as a chess board). First iterate over each
-              white square (i, j) in the texture.
+              white square (j, i) in the texture.
               <ul>
                 <li>
-                  Case 1 - (i, j) is 'off': then
+                  Case 1 - (j, i) is 'off': then
                   <ul>
                     <li>
-                       If pixel(i-1, j) is 'on', set (i, j) to 'on' with probability q
+                       If pixel(j, i-1) is 'on', set (j, i) to 'on' with probability q
                     </li>
                       <li>
-                         Iterate through other neighbors (i', j'). If
-                         (i', j') is on, set (i, j) to 'on' with probability p.
+                         Iterate through other adjecent neighbors (j', i'). If
+                         (j', i') is on, set (j, i) to 'on' with probability p.
                       </li>
 
                     </ul>
@@ -72,20 +74,20 @@
                   </li>
 
                 <li>
-                  Case 2 - pixel(i, j) is 'on': then iterate through each neighbor (i', j'),
-                  and if (i', j') is off, set (i, j) to off with probability s.
+                  Case 2 - pixel(j, i) is 'on': then iterate through each neighbor (j', i'),
+                  and if (j', i') is off, set (j, i) to off with probability s.
                 </li>
               </ul>
 
             Reapeat this for the black squares</li>
-            <li>Suppose we have a pixel (i, j) corresponding to the texel (i, j)
-              (by abuse of notation). Then, in the fragment shader,
-              we set the color of (i, j) to
-              $$0.2 * 255 * pixel(i, j) +
-              0.25 * 255 * pixel(i + 10, j) +
-              0.25 * 255 * pixel(i - 10, j) +
-              0.25 * 255 * pixel(i, j - 10) +
-              0.25 * 255 * pixel(i, j + 10) $$
+            <li>Suppose we have a pixel (j, i) corresponding to a fragment.
+              Then, in the fragment shader,
+              we set the color of the fragment to
+              $$0.2 * 255 * pixel(j, i) +
+              0.25 * 255 * pixel(j, i + 10) +
+              0.25 * 255 * pixel(j, i - 10) +
+              0.25 * 255 * pixel(j - 10, i) +
+              0.25 * 255 * pixel(j + 10, i) $$
             </li>
             <li>Repeat step 2.</li>
 
@@ -96,24 +98,31 @@
 
     <h2 align="middle">Brief Analysis</h2>
         <p>
-          At each step, the algorithm iterates through all N^2 texels in the texture,
-          so each update step is N^2 time, where N is the width and height of the texture.
+          For each frame, the algorithm iterates through all N^2 "pixels" in the array (where N is the width and height of the texture),
+          thereby the complexity scales in the size of our array.
         </p>
 
         <p>
-          Why might this have any hope of making realistic-looking fire? Well, proving
-          anything would be difficult, but we can give an extremely rough explanation of why this
-          may be. The physical process of fire burning is, roughly speaking, a local process,
+          Why does this make realistic-looking fire? Well, showing equivalencies between our model and the true dynamics is not practical;
+          the difference in resolutions is too large.
+          Nonetheless, we provide a heuristic explaination regarding success of our result.
+          The physical process of fire burning is, roughly speaking, a local process;
           meaning that the time evolution of a point in space only depends on data
-          coming from points that are nearby. Furthermore, it should be, roughly,
-          second order in space, and we attempt to caputure this by
-          making each pixel's update some type of average of its four
+          coming from points that are nearby. Furthermore, it should be roughly
+          second order in space. We attempt to capture this by
+          updating each pixel conditioned on the state of its four
           nearest neighbors.
         </p>
 
     <h2 align="middle">Updated Plan</h2>
-      <p>In the next two weeks we plan on taking two different approaches. Our first approach is taking what we have and making it better. Our ideas currently are to make the fire simulation three dimensional and change the color of the fire. Other aspirations include smoke or other fire effects. Since the model we have currently is based more on a randomness and a probabilistic algorithm, we want to see if we can implement a different method of fire rendering based on physical equations. This second approach would not be a real time simulation, but rather one in which we attempt to render fire using ray tracing and see how realistic we can get it. </p>
-      <p>Hopefully we can implement both approaches so that we can compare the pros and cons of them in terms of fire simulation or rendering. </p>
+      <p>In the next two weeks we plan on following two different approaches. Firstly, we intend to extend into 3 dimensions and refine our color shading scheme. Other aspirations
+        include smoke & spark production. We will only push the complexity within the limits of what a GPU can handle in real-time rendering.
+        The second approach swaps the strengths & weaknesses of the first approach, i.e. the model is significantly more elaborate, as well as significantly slower
+        to calculate/render. We partition space into a grid of fixed volume "voxels". We produce fire by "burning" a vaporized fuel. This fuel is simulated via incompressible
+        Navier-Stokes equations. The gaseous combustion products modeled by the same equations. An "implicit barrier" is tracked, which separates the fuel from the products,
+        being an important tool in rendering the contour of the flame. The barrier is propagated through space with a "Level Set Method" and "Fast Marching" algorithms which
+        focus on gird points near the barrier. The barrier moves only in the direction normal to its surface, with speed dependant on the flux, reaction rate, and curvature.</p>
+      <p>We intend to compare relative pros and cons between our approaches in terms of speed and detail.</p>
 
 
       <h2 align="middle">Video and Slides</h2>

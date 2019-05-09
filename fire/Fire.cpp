@@ -24,9 +24,9 @@ void Fire::propagateFront(double w1, double w2, double w3) {
             for (int k = 1; k <= N; k++) {
                 double nx, ny, nz;
                 // components of the gradient
-                nx = (grid[4*((i + 1)*N*N + j*N       + k)]     - grid[4*((i - 1)*N*N + j*N       + k)]) / (2*h);
-                ny = (grid[4*(i*N*N       + (j + 1)*N + k)]     - grid[4*(i*N*N       + (j - 1)*N + k)]) / (2*h);
-                nz = (grid[4*(i*N*N       + j*N       + k + 1)] - grid[4*(i*N*N       + j*N       + k - 1)]) / (2*h);
+                nx = (grid[(i+1)*N*N + j*N     + k]   - grid[(i-1)*N*N + j*N     + k])   / (2*h);
+                ny = (grid[i*N*N     + (j+1)*N + k]   - grid[i*N*N     + (j-1)*N + k])   / (2*h);
+                nz = (grid[i*N*N     + j*N     + k+1] - grid[i*N*N     + j*N     + k-1]) / (2*h);
                 // components of normalized surface normal
                 double nnx = nx / norm(nx, ny, nz);
                 double nny = ny / norm(nx, ny, nz);
@@ -41,24 +41,24 @@ void Fire::propagateFront(double w1, double w2, double w3) {
                 double phix, phiy, phiz;
 
                 if (w1 > 0) {
-                    phix = (grid[4*(i*N*N       + j*N       + k)] - grid[4*((i - 1)*N*N + j*N       + k)]) / h;
+                    phix = (grid[i*N*N     + j*N     + k] - grid[(i-1)*N*N + j*N     + k]) / h;
                 } else {
-                    phix = (grid[4*((i + 1)*N*N + j*N       + k)] - grid[4*(i*N*N       + j*N       + k)]) / h;
+                    phix = (grid[(i+1)*N*N + j*N     + k] - grid[i*N*N     + j*N     + k]) / h;
                 }
                 if (w2 > 0) {
-                    phiy = (grid[4*(i*N*N       + j*N       + k)] - grid[4*(i*N*N       + (j - 1)*N + k)]) / h;
+                    phiy = (grid[i*N*N     + j*N     + k] - grid[i*N*N     + (j-1)*N + k]) / h;
                 } else {
-                    phiy = (grid[4*(i*N*N       + (j + 1)*N + k)] - grid[4*(i*N*N       + j*N       + k)]) / h;
+                    phiy = (grid[i*N*N     + (j+1)*N + k] - grid[i*N*N     + j*N     + k]) / h;
                 }
                 if (w3 > 0) {
-                    phiz = (grid[4*(i*N*N       + j*N       + k)] - grid[4*(i*N*N       + (j - 1)*N + k)]) / h;
+                    phiz = (grid[i*N*N     + j*N     + k] - grid[i*N*N     + (j-1)*N + k]) / h;
                 } else {
-                    phiz = (grid[4*(i*N*N       + (j + 1)*N + k)] - grid[4*(i*N*N       + j*N       + k)]) / h;
+                    phiz = (grid[i*N*N     + (j+1)*N + k] - grid[i*N*N     + j*N     + k]) / h;
                 }
 
 
                 // update implicit surface function
-                grid[4*(i*N*N + j*N + k)] = grid[4*(i*N*N + j*N + k)]
+                grid[i*N*N + j*N + k] = grid[i*N*N + j*N + k]
                                                   - dt * (w1 * phix + w2 * phiy + w3 * phiz);
 
 
@@ -80,12 +80,12 @@ void Fire::addForce() {
                 //gravity
                 g = 9.81;
                 // buoyancy
-                fz = alpha * (grid[4*(i*N*N + j*N + k)] - Tair);
+                fz = alpha * (grid[i*N*N + j*N + k] - Tair);
                 // vorticity
                 Vector3d wijk = vort(i, j, k);
-                Vector3d n((vort(i+1, j, k).norm() - wijk.norm())/h,
-                        (vort(i, j+1, k).norm() - wijk.norm())/h,
-                        (vort(i, j, k+1).norm() - wijk.norm())/h);
+                Vector3d n((vort(i+1, j,   k).norm()   - wijk.norm())/h,
+                           (vort(i,   j+1, k).norm()   - wijk.norm())/h,
+                           (vort(i,   j,   k+1).norm() - wijk.norm())/h);
                 n.normalize();
                 Vector3d fconf = eps * h * n.cross(wijk);
                 fconf(2) += (fz + g);
@@ -167,3 +167,43 @@ double Fire::norm(double x, double y, double z) {
     return sqrt(x*x + y*y + z*z);
 }
 
+void Fire::poissonPressure() {
+    int m = N*N*N;
+    VectorXd x(m), b(m);
+    SparseMatrix<double> A(m,m);
+// fill b
+    double uGrad, C = ph*h/dt;
+    int n;
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                n = i*N*N + j*N + k;
+                uGrad =
+                    velNewX[(i+1)*N*N + j*N     + k]   - velNewX[i*N*N + j*N + k] +
+                    velNewY[i*N*N     + (j+1)*N + k]   - velNewY[i*N*N + j*N + k] +
+                    velNewZ[i*N*N     + j*N     + k+1] - velNewZ[i*N*N + j*N + k];
+                if (grid[n] > 0 && grid[n] < h*1.5) {
+                    if (grid[n + N*N] <= 0) uGrad += (ph/pf - 1)*S;
+                    if (grid[n + N] <= 0)   uGrad += (ph/pf - 1)*S;
+                    if (grid[n + 1] <= 0)   uGrad += (ph/pf - 1)*S;
+                }
+                else if (grid[n] <= 0 && grid[n] > -h*1.5) {
+                    if (grid[n + N*N] > 0) uGrad += (pf/ph - 1)*S;
+                    if (grid[n + N] > 0)   uGrad += (pf/ph - 1)*S;
+                    if (grid[n + 1] > 0)   uGrad += (pf/ph - 1)*S;
+                }
+                uGrad = uGrad*C;
+                if (grid[n] > 0) uGrad = uGrad*pf/ph;
+                b(n) = uGrad;
+            }
+        }
+    }
+
+    ConjugateGradient<SparseMatrix<double>, Lower|Upper, IncompleteCholesky<double, Lower|Upper>> cg;
+    cg.compute(A);
+    x = cg.solve(b);
+    std::cout << "#iterations:     " << cg.iterations() << std::endl;
+    std::cout << "estimated error: " << cg.error()      << std::endl;
+// update b, and solve again
+    x = cg.solve(b);
+}

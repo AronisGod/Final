@@ -13,6 +13,7 @@
 #define FIRE_FIRE_H
 
 #include "Eigen/Eigen/Dense"
+#include "Eigen/Eigen/IterativeLinearSolvers"
 
 using namespace Eigen;
 
@@ -26,9 +27,11 @@ class Fire {
     double Tair; // temperature of ambient environment
     double alpha; // positive constant
     double eps;
+    double ph, pf; // density of the "hot products" & "fuel vapor" respectively
     int N; // Size of grid: grid will be 4 by N by N by N (4 because we have 4 quantities to keep track of)
-    vector<double> grid; // grid with implicit surface, temp, density, pressure at current time step
-    vector<double> newGrid; // grid with implicit surface, temp, density, pressure at next time step
+    vector<double> grid; // grid with implicit surface at current time step
+    // We define φ to be positive in the region of space filled with fuel, negative elsewhere and zero at the reaction zone.
+    vector<double> newGrid; // grid with implicit surface at next time step
 
     vector<double> velNewX; // array with x-coordinate of velocities defined across faces of 'grid'
     vector<double> velNewY; // array with y-coordinate of velocities defined across faces of 'grid'
@@ -60,7 +63,7 @@ class Fire {
 
     Vector3d vort(int i, int j, int k);
 
-
+    void poissonPressure();
 
 
 

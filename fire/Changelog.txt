@@ -3,3 +3,10 @@
 	*organized code layout and fixed indexing into grid in Fire::propagateFront()
 	*Corrected spelling of "propogate-->propagate" in function calls & comments
 	*organized code in Fire::vort() & Fire::advect() ##I'm somewhat OCD on groupings of arithmetic for readability...
+	-Removed the need to carry density at every cell
+	+and instead included constants for the "fuel" & "product" densities
+	+Wrote incomplete procedure, Fire::poissonPressure(), to build coefficient matrix A & vector b for 
+		input into ConjugateGradient algorithm
+
+5/9/19 -- Aron
+	TBD

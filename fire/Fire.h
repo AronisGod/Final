@@ -32,7 +32,7 @@ class Fire {
     vector<double> grid; // grid with implicit surface at current time step
     // We define φ to be positive in the region of space filled with fuel, negative elsewhere and zero at the reaction zone.
     vector<double> newGrid; // grid with implicit surface at next time step
-
+    SparseMatrix<double> A;
     vector<double> velNewX; // array with x-coordinate of velocities defined across faces of 'grid'
     vector<double> velNewY; // array with y-coordinate of velocities defined across faces of 'grid'
     vector<double> velNewZ; // array with z-coordinate of velocities defined across faces of 'grid'
@@ -65,7 +65,7 @@ class Fire {
 
     void poissonPressure();
 
-
+    void buildA(int N);
 
 };
 

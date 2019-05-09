@@ -9,4 +9,4 @@
 		input into ConjugateGradient algorithm
 
 5/9/19 -- Aron
-	TBD
+	+ROutine to build A

@@ -8,7 +8,22 @@
 
 
 
-
+void Fire::buildA(int N) {
+    int m = N*N*N;
+    A = SparseMatrix<double>(m,m);
+    typedef Triplet<double> T;
+    vector<T> list;
+    for (int idx = 0; idx < m; idx++) {
+        list.push_back(T(idx, idx, -6));
+        list.push_back(T(idx + 1,   idx, 1));
+        list.push_back(T(idx + N,   idx, 1));
+        list.push_back(T(idx + N*N, idx, 1));
+        list.push_back(T(idx,       idx + 1, 1));
+        list.push_back(T(idx,       idx + N, 1));
+        list.push_back(T(idx,       idx + N*N, 1));
+    }
+    A.setFromTriplets(list.begin(), list.end());
+}
 
 void Fire::update() {
 
@@ -170,13 +185,13 @@ double Fire::norm(double x, double y, double z) {
 void Fire::poissonPressure() {
     int m = N*N*N;
     VectorXd x(m), b(m);
-    SparseMatrix<double> A(m,m);
-// fill b
+
     double uGrad, C = ph*h/dt;
     int n;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
+                // Builds b vector
                 n = i*N*N + j*N + k;
                 uGrad =
                     velNewX[(i+1)*N*N + j*N     + k]   - velNewX[i*N*N + j*N + k] +

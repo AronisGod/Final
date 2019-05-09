@@ -1,0 +1,5 @@
+5/8/19 -- Aron
+	+added gravity in Fire::addForce()
+	*organized code layout and fixed indexing into grid in Fire::propagateFront()
+	*Corrected spelling of "propogate-->propagate" in function calls & comments
+	*organized code in Fire::vort() & Fire::advect() ##I'm somewhat OCD on groupings of arithmetic for readability...

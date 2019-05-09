@@ -20,13 +20,13 @@ using namespace std;
 
 
 class Fire {
-    double S; // Parameter controlling velocity of front propogation
+    double S; // Parameter controlling velocity of front propagation(Combustion/Reaction Rate)
     double dt; // size of time steps
     double h; // grid spacing
     double Tair; // temperature of ambient environment
     double alpha; // positive constant
     double eps;
-    int N; // Size of grid: grid will be 4 N by N by N (4 because we have 4 quantities to keep track of)
+    int N; // Size of grid: grid will be 4 by N by N by N (4 because we have 4 quantities to keep track of)
     vector<double> grid; // grid with implicit surface, temp, density, pressure at current time step
     vector<double> newGrid; // grid with implicit surface, temp, density, pressure at next time step
 
@@ -46,7 +46,7 @@ class Fire {
 
     void update();
 
-    void propogateFront(double w1, double w2, double w3);
+    void propagateFront(double w1, double w2, double w3);
 
     double norm(double x, double y, double z);
 

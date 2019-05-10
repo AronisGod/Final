@@ -14,13 +14,13 @@ void Fire::buildA(int N) {
     typedef Triplet<double> T;
     vector<T> list;
     for (int idx = 0; idx < m; idx++) {
-        list.push_back(T(idx, idx, -6));
-        list.push_back(T(idx + 1,   idx, 1));
-        list.push_back(T(idx + N,   idx, 1));
-        list.push_back(T(idx + N*N, idx, 1));
-        list.push_back(T(idx,       idx + 1, 1));
-        list.push_back(T(idx,       idx + N, 1));
-        list.push_back(T(idx,       idx + N*N, 1));
+        list.emplace_back(idx, idx, -6);
+        list.emplace_back(idx + 1,   idx,       1);
+        list.emplace_back(idx + N,   idx,       1);
+        list.emplace_back(idx + N*N, idx,       1);
+        list.emplace_back(idx,       idx + 1,   1);
+        list.emplace_back(idx,       idx + N,   1);
+        list.emplace_back(idx,       idx + N*N, 1);
     }
     A.setFromTriplets(list.begin(), list.end());
 }
@@ -33,7 +33,7 @@ void Fire::update() {
 
 }
 
-void Fire::propagateFront(double w1, double w2, double w3) {
+void Fire::propagateFront() {
     for (int i = 1; i <= N; i++) {
         for (int j = 1; j <= N; j++) {
             for (int k = 1; k <= N; k++) {
@@ -43,14 +43,17 @@ void Fire::propagateFront(double w1, double w2, double w3) {
                 ny = (grid[i*N*N     + (j+1)*N + k]   - grid[i*N*N     + (j-1)*N + k])   / (2*h);
                 nz = (grid[i*N*N     + j*N     + k+1] - grid[i*N*N     + j*N     + k-1]) / (2*h);
                 // components of normalized surface normal
-                double nnx = nx / norm(nx, ny, nz);
-                double nny = ny / norm(nx, ny, nz);
-                double nnz = nz / norm(nx, ny, nz);
+                double Norm = norm(nx, ny, nz);
+                double nnx = nx / Norm;
+                double nny = ny / Norm;
+                double nnz = nz / Norm;
 
-                //    // components of velocity
-                //    double w1 = u1 + S * nnx;
-                //    double w2 = u2 + S * nny;
-                //    double w3 = u3 + S * nnz;
+                *gridNorm[i*N*N + j*N + k] = {nnx, nny, nnz};
+
+                    // components of velocity
+                    double w1 = velCX[i*N*N + j*N + k] + S * nnx;
+                    double w2 = velCY[i*N*N + j*N + k] + S * nny;
+                    double w3 = velCZ[i*N*N + j*N + k] + S * nnz;
 
                 // upwind finite difference approximations for partial derivatives
                 double phix, phiy, phiz;
@@ -193,19 +196,19 @@ void Fire::poissonPressure() {
             for (int k = 0; k < N; k++) {
                 // Builds b vector
                 n = i*N*N + j*N + k;
-                uGrad =
+                uGrad =          //Sum of (u_n+1 - u_n) for n(={x, y, z}
                     velNewX[(i+1)*N*N + j*N     + k]   - velNewX[i*N*N + j*N + k] +
                     velNewY[i*N*N     + (j+1)*N + k]   - velNewY[i*N*N + j*N + k] +
                     velNewZ[i*N*N     + j*N     + k+1] - velNewZ[i*N*N + j*N + k];
-                if (grid[n] > 0 && grid[n] < h*1.5) {
-                    if (grid[n + N*N] <= 0) uGrad += (ph/pf - 1)*S;
-                    if (grid[n + N] <= 0)   uGrad += (ph/pf - 1)*S;
-                    if (grid[n + 1] <= 0)   uGrad += (ph/pf - 1)*S;
+                if (grid[n] > 0 && grid[n] < h*1.5) {     //Calculates Ghost values for velocities crossing barrier
+                    if (grid[n + N*N] <= 0) uGrad += (ph/pf - 1)*S*(*gridNorm[n])[0];
+                    if (grid[n + N] <= 0)   uGrad += (ph/pf - 1)*S*(*gridNorm[n])[1];
+                    if (grid[n + 1] <= 0)   uGrad += (ph/pf - 1)*S*(*gridNorm[n])[2];
                 }
                 else if (grid[n] <= 0 && grid[n] > -h*1.5) {
-                    if (grid[n + N*N] > 0) uGrad += (pf/ph - 1)*S;
-                    if (grid[n + N] > 0)   uGrad += (pf/ph - 1)*S;
-                    if (grid[n + 1] > 0)   uGrad += (pf/ph - 1)*S;
+                    if (grid[n + N*N] > 0) uGrad += (pf/ph - 1)*S*(*gridNorm[n])[0];
+                    if (grid[n + N] > 0)   uGrad += (pf/ph - 1)*S*(*gridNorm[n])[1];
+                    if (grid[n + 1] > 0)   uGrad += (pf/ph - 1)*S*(*gridNorm[n])[2];
                 }
                 uGrad = uGrad*C;
                 if (grid[n] > 0) uGrad = uGrad*pf/ph;

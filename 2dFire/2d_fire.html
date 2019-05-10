@@ -1,0 +1,446 @@
+Skip to content
+
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <title>Ising</title>
+
+    <script type="text/javascript" src="./webgl-utils.js"></script>
+
+    <script id="frag_draw_tex" type="x-shader/x-fragment">#version 300 es
+  precision mediump float;
+  uniform sampler2D tex1;
+	out vec4 color;
+	void main(void) {
+		vec3 pix = texture(tex1,vec2(gl_FragCoord.x,gl_FragCoord.y)/512.0).xyz;
+    color = vec4(pix,1.0);
+    return;
+	}
+
+    </script>
+
+    <script id="vert_pass" type="x-shader/x-vertex">#version 300 es
+	precision mediump float;
+    layout(location = 0) in vec3 aVertexPosition;
+    void main(void) { gl_Position = vec4(aVertexPosition,1.0);  }
+
+    </script>
+
+    <script type="text/javascript">
+        var gl;
+        var tex_framebuffer;
+        var SVAO, SL;
+        var start_time = new Date().getTime();
+        var last_rend_time = 0;
+        var sh_draw_tex;
+        var tex1;
+        var screen_size = 512;
+        var t = 0;
+
+        const N = 64;
+        var pixels = new Uint8Array(4 * N * N);
+
+        var velX = makeArray(N * N, 0);
+        var velY = makeArray(N * N, 0);
+        var velZ = makeArray(N * N, 0);
+
+        var velNewX = makeArray(N * N, 0);
+        var velNewY = makeArray(N * N, 0);
+        var velNewZ = makeArray(N * N, 0);
+        var Y = makeArray(N * N, 0);
+        var newY = makeArray(N * N, 0);
+        var div = makeArray(N * N, 0);
+        var p = makeArray(N * N, 0);
+
+        var d = makeArray(N * N, 0);
+        var dOld = makeArray(N * N, 0);
+
+        var diff = .8
+
+        var h = 1.0;
+        var dt = .01;
+        var visc = 1;
+
+
+        function popPixels() {
+            for (var i = 0; i < N; i++) {
+                for (var j = 0; j < N; j++) {
+                    // pixels[4*(i*N+j)+0] = 255*velX[i*N+j];
+                    // pixels[4*(i*N+j)+1] = 255*velY[i*N+j];
+                    pixels[4 * (i * N + j) + 2] = 255 * d[i * N + j];
+                    pixels[4 * (i * N + j) + 3] = 255;
+                }
+            }
+        }
+
+
+        function addSource(x, s) {
+            for (i = 0; i < N * N; i++) {
+                x[i] += dt * s[i];
+            }
+        }
+
+
+        function advect(type, arr, arrOld) {
+            var dtt = dt * N;
+            for (var i = 1; i < N - 1; i++) {
+                for (var j = 1; j < N - 1; j++) {
+                    // velX is in world space units of distance / time
+                    // go backwards along characteristic flow line
+                    // --to first order this means to backwards along the velocity field
+
+                    var newI = Math.min(Math.max(i - dtt * velX[i * N + j] / h, 0), N - 1);
+                    var newJ = Math.min(Math.max(j - dtt * velY[i * N + j] / h, 0), N - 1);
+
+
+                    var x = Math.floor(newI);
+                    var y = Math.floor(newJ);
+
+
+                    var dx = newI - x;
+                    var dy = newJ - y;
+
+                    arr[i * N + j] = biLerp(x, y, dx, dy, arrOld);
+                    // velNewY[i*N + j] = biLerp(x, y, dx, dy, arrOld);
+                    // newY[i*N + j] = biLerp(x, y, dx, dy, Y);
+                }
+            }
+            boundary(type, arr);
+        }
+
+        function biLerp(x, y, dx, dy, arr) {
+            return (1 - dx) * (1 - dy) * (1) * arr[x * N + y] +
+                (1 - dx) * dy * (1) * arr[x * N + (y + 1)] +
+                dx * (1 - dy) * (1) * arr[(x + 1) * N + y] +
+                dx * dy * (1) * arr[(x + 1) * N + (y + 1)];
+        }
+
+
+        function linearSolver(type, arr, arrOld, a, c) {
+            for (var m = 0; m < 20; m++) {
+
+                for (var i = 1; i < N - 1; i++) {
+                    for (var j = 1; j < N - 1; j++) {
+
+
+                        arr[i * N + j] = (arrOld[i * N + j] + a * (arr[(i - 1) * N + j] + arr[(i + 1) * N + j]
+                            + arr[i * N + j - 1] + arr[i * N + j + 1])) / c;
+
+                    }
+                }
+                boundary(type, arr);
+            }
+        }
+
+        function boundary(b, x) {
+            for (var i = 0; i < N; i++) {
+                x[0 * N + i] = (b == 1) ? -x[1 * N + i] : x[1 * N + i];
+                x[(N - 1) * N + i] = (b == 1) ? -x[(N - 2) * N + i] : x[(N - 2) * N + i];
+
+                x[i * N + 0] = (b == 2) ? -x[i * N + 1] : x[i * N + 1];
+                x[i * N + N - 1] = (b == 2) ? -x[i * N + N - 2] : x[i * N + N - 2];
+                // x[0*N + i] = x[1*N + i];
+                // x[(N-1)*N + i] = x[(N-2)*N + i];
+                //
+                // x[i*N + 0] = x[i*N + 1];
+                // x[i*N + N-1] = x[i*N + N-2];
+            }
+            x[0 * N + 0] = 0.5 * (x[1 * N + 0] + x[0 * N + 1]);
+            x[(N - 1) * N + 0] = 0.5 * (x[(N - 2) * N + 0] + x[(N - 1) * N + 1]);
+            x[0 * N + N - 1] = 0.5 * (x[1 * N + N - 1] + x[0 * N + N - 2]);
+            x[(N - 1) * N + N - 1] = 0.5 * (x[(N - 2) * N + N - 1] + x[(N - 1) * N + N - 2]);
+        }
+
+        function project(p, div) {
+            for (var i = 1; i < N - 1; i++) {
+                for (var j = 1; j < N - 1; j++) {
+                    var dx = 1 / (2 * h) * (velX[(i + 1) * N + j] - velX[(i - 1) * N + j]);
+                    var dy = 1 / (2 * h) * (velY[i * N + j + 1] - velY[i * N + j - 1]);
+                    div[i * N + j] = dx + dy;
+                    p[i * N + j] = 0;
+                }
+            }
+            boundary(0, div);
+            boundary(0, p);
+
+            linearSolver(0, p, div, 1, 4);
+
+            for (var i = 1; i < N - 1; i++) {
+                for (var j = 1; j < N - 1; j++) {
+                    var dx = 1 / (2 * h) * (p[(i + 1) * N + j] - p[(i - 1) * N + j]);
+                    var dy = 1 / (2 * h) * (p[i * N + j + 1] - p[i * N + j - 1]);
+                    velNewX[i * N + j] += dx;
+                    velNewY[i * N + j] += dy;
+                }
+            }
+// add in more calls to boundary
+            boundary(1, velNewX);
+            boundary(2, velNewY);
+
+
+        }
+
+        function densityStep() {
+            addSource(d, dOld);
+            var temp = d;
+            d = dOld;
+            dOld = temp;
+            // diffuse(0, d, dOld, diff);
+            // var temp = d;
+            // d = dOld;
+            // dOld = temp;
+            // advect(0, d, dOld);
+
+        }
+
+        function diffuse(type, arr, arrOld, dif) {
+            var a = dt * dif * N * N;
+            linearSolver(type, arr, arrOld, a, 1 + 4 * a);
+        }
+
+
+        function drawScene() {
+            t = (new Date().getTime() - start_time) / 1000.0;
+
+            gl.useProgram(sh_draw_tex);
+            gl.uniform1i(gl.getUniformLocation(sh_draw_tex, "tex1"), 0);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+            gl.bindVertexArray(SVAO);
+            gl.drawElements(gl.TRIANGLES, SL, gl.UNSIGNED_SHORT, 0);
+            gl.bindVertexArray(null);
+        }
+
+        function init() {
+            for (var i = 0; i < N; i++) {
+                for (var j = 0; j < N; j++) {
+                    velX[i * N + j] = .5 * Math.sin(i / (N)) + .5;
+                    velY[i * N + j] = .5 * Math.cos(j / (N)) + .5;
+                    dOld[i * N + j] = .5 * Math.sin(i / (N)) + .5;
+                    d[i * N + j] = dOld[i * N + j] +
+                        dt * velX[i * N + j] + dt * velY[i * N + j];
+                }
+            }
+        }
+
+        function copyVs() {
+            for (var i = 0; i < N; i++) {
+                for (var j = 0; j < N; j++) {
+                    velX[i * N + j] = velNewX[i * N + j];
+                    velY[i * N + j] = velNewY[i * N + j];
+                }
+            }
+        }
+
+
+        function velocityStep() {
+            addSource(velNewX, velX);
+            addSource(velNewY, velY);
+            // buoyancy(velY);
+            addSource(velNewY, velY);
+
+
+            tmp = velX;
+            velX = velNewX;
+            velNewX = tmp;
+            diffuse(2, velNewX, velX, visc);
+            tmp = velY;
+            velY = velNewY;
+            velNewY = tmp;
+            diffuse(1, velNewY, velY, visc);
+
+            project(velX, velY);
+            tmp = velX;
+            velX = velNewX;
+            velNewX = tmp;
+
+            tmp = velY;
+            velY = velNewY;
+            velNewY = tmp;
+
+            advect(1, velNewX, velX);
+            advect(2, velNewY, velY);
+
+            project(p, div);
+
+
+        }
+
+
+        var count = 0;
+
+        function tick() {
+            if (count < 500) {
+                requestAnimFrame(tick);
+
+                // velocityStep();
+
+                densityStep();
+
+                copyVs();
+
+                popPixels();
+
+                loadTextures();
+
+                drawScene();
+            }
+        }
+
+        function u01() {
+            return Math.random();
+        }
+
+        function makeArray(w, val) { // really? there is no better way to do this?
+            var arr = [];
+            for (i = 0; i < w; i++) {
+                arr.push(val);
+            }
+            return arr;
+        }
+
+        function make_shader(vertshader, fragshader) {
+            var sp = gl.createProgram();
+            gl.attachShader(sp, getShader(gl, vertshader));
+            gl.attachShader(sp, getShader(gl, fragshader));
+            gl.linkProgram(sp);
+            if (!gl.getProgramParameter(sp, gl.LINK_STATUS)) {
+                alert("Could not initialise shaders");
+            }
+            return sp;
+        }
+
+        function loadShaders() {
+            sh_draw_tex = make_shader("vert_pass", "frag_draw_tex");
+        }
+
+        function loadTextures() {
+
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, tex1);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+            //gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex1);
+            //gl.texImage2D(gl.TEXTURE_2D, 0, gl.ALPHA, N, N, 0, gl.ALPHA, gl.UNSIGNED_BYTE,pixel);
+        }
+
+        function webGLStart() {
+            var canvas = document.getElementById("lesson01-canvas");
+            try {
+                gl = canvas.getContext("webgl2", {preserveDrawingBuffer: true});
+                gl.viewportWidth = canvas.width;
+                gl.viewportHeight = canvas.height;
+            } catch (e) {
+            }
+            if (!gl) {
+                alert("Could not initialise WebGL, sorry :-(");
+            }
+            gl.disable(gl.DEPTH_TEST);
+            loadShaders();
+
+            tex1 = gl.createTexture();
+            loadTextures();
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            // square
+            vertices = [1.0, 1.0, 0.0, -1.0, 1.0, 0.0, 1.0, -1.0, 0.0, -1.0, -1.0, 0.0];
+            ebo = [0, 1, 2, 1, 2, 3];
+            SVAO = gl.createVertexArray();
+            SL = 6;
+            gl.bindVertexArray(SVAO);
+            gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+            gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(0);
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ebo), gl.STATIC_DRAW);
+            tex_framebuffer = gl.createFramebuffer();
+            gl.bindFramebuffer(gl.FRAMEBUFFER, tex_framebuffer);
+            var depthBuffer = gl.createRenderbuffer();
+            gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+            gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 512, 512);
+            gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            console.log("HELLO?");
+
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+            document.onmousedown = handleMouseDown;
+            document.onmouseup = handleMouseUp;
+            document.onkeydown = handleKeyDown;
+            document.onmousemove = handleMouseMove;
+            document.onmouseout = handleMouseUp;
+
+
+            init();
+            tick();
+        }
+
+        function getShader(gl, id) {
+            var shaderScript = document.getElementById(id);
+            if (!shaderScript) {
+                return null;
+            }
+            var str = "";
+            var k = shaderScript.firstChild;
+            while (k) {
+                if (k.nodeType == 3) {
+                    str += k.textContent;
+                }
+                k = k.nextSibling;
+            }
+            var shader;
+            if (shaderScript.type == "x-shader/x-fragment") {
+                shader = gl.createShader(gl.FRAGMENT_SHADER);
+            } else if (shaderScript.type == "x-shader/x-vertex") {
+                shader = gl.createShader(gl.VERTEX_SHADER);
+            } else {
+                return null;
+            }
+            gl.shaderSource(shader, str);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                alert(gl.getShaderInfoLog(shader));
+                return null;
+            }
+            return shader;
+        }
+
+        // ---- GUI stuff
+        {
+            var drag = false;
+            var cmx, cmy;
+
+            function handleMouseDown(event) {
+            }
+
+            function handleMouseMove(event) {
+            }
+
+            function handleKeyDown(event) {
+            }
+
+            function handleMouseUp(event) {
+            }
+        }
+    </script>
+</head>
+
+
+<body style="background-color:black;" onload="webGLStart();">
+<canvas id="lesson01-canvas" style="border: none;" width="512" height="512" bg-color="black"></canvas>
+</body>
+</html>
+© 2019 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Help
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About

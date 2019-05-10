@@ -40,7 +40,6 @@ private:
     vector<double> newGrid; // grid with implicit surface at next time step
     vector<array<double, 3>*> gridNorm; // The normalized gradient field of the grid at next time step
     // We define φ to be positive in the region of space filled with fuel, negative elsewhere and zero at the reaction zone.
-    vector<double> newGrid; // grid with implicit surface at next time step
     SparseMatrix<double> A;
     VectorXd p;
     vector<double> velNewX; // array with x-coordinate of velocities defined across faces of 'grid'
@@ -70,7 +69,7 @@ public:
 
     void updateT();
 
-    double edge(int, int, int);
+    array<double, 3> edge(int, int);
 
     void propagateFront();
 
@@ -80,7 +79,7 @@ public:
 
     void advect();
 
-    double triLerp(int x, int y, int z, double dx, double dy, double dz, vector<double> &arr, int axis);
+    double triLerp(int x, int y, int z, double dx, double dy, double dz, vector<double> &arr, array<double, 8>* = NULL);
 
     void addForce();
 

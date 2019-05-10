@@ -12,8 +12,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a6f860c9-3264-437f-bd6e-798d1a6679cd" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/Changelog.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Changelog.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Fire.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Fire.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Fire.h" beforeDir="false" afterPath="$PROJECT_DIR$/Fire.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-release/CMakeFiles/fire.dir/Fire.cpp.obj" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-release/CMakeFiles/fire.dir/main.cpp.obj" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/cmake-build-release/" />
@@ -46,8 +50,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Fire.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="481">
-              <caret line="82" column="102" selection-start-line="82" selection-start-column="102" selection-end-line="82" selection-end-column="102" />
+            <state relative-caret-position="77">
+              <caret line="80" lean-forward="true" selection-start-line="80" selection-end-line="80" />
               <folding>
                 <element signature="e#226#254#0" expanded="true" />
               </folding>
@@ -58,8 +62,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Fire.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="85">
-              <caret line="169" column="21" lean-forward="true" selection-start-line="169" selection-start-column="21" selection-end-line="169" selection-end-column="21" />
+            <state relative-caret-position="233">
+              <caret line="287" column="65" selection-start-line="287" selection-start-column="65" selection-end-line="287" selection-end-column="65" />
             </state>
           </provider>
         </entry>
@@ -67,8 +71,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="119">
-              <caret line="7" column="20" selection-start-line="7" selection-start-column="20" selection-end-line="7" selection-end-column="20" />
+            <state relative-caret-position="136">
+              <caret line="8" column="32" selection-start-line="8" selection-start-column="32" selection-end-line="8" selection-end-column="32" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
@@ -158,12 +162,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1557360595415</updated>
-      <workItem from="1557360606542" duration="41843000" />
+      <workItem from="1557360606542" duration="48636000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="41843000" />
+    <option name="totallyTimeSpent" value="48636000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
@@ -174,7 +178,7 @@
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Database Changes" />
       <window_info anchor="bottom" id="Version Control" />
-      <window_info anchor="bottom" id="Messages" weight="0.29787233" />
+      <window_info active="true" anchor="bottom" id="Messages" visible="true" weight="0.29787233" />
       <window_info anchor="bottom" id="Terminal" weight="0.3289689" />
       <window_info anchor="bottom" id="Event Log" side_tool="true" />
       <window_info anchor="bottom" id="CMake" weight="0.32972974" />
@@ -219,8 +223,8 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/main.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="7" column="20" selection-start-line="7" selection-start-column="20" selection-end-line="7" selection-end-column="20" />
+        <state relative-caret-position="136">
+          <caret line="8" column="32" selection-start-line="8" selection-start-column="32" selection-end-line="8" selection-end-column="32" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>
@@ -229,8 +233,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Fire.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="481">
-          <caret line="82" column="102" selection-start-line="82" selection-start-column="102" selection-end-line="82" selection-end-column="102" />
+        <state relative-caret-position="77">
+          <caret line="80" lean-forward="true" selection-start-line="80" selection-end-line="80" />
           <folding>
             <element signature="e#226#254#0" expanded="true" />
           </folding>
@@ -239,8 +243,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Fire.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="169" column="21" lean-forward="true" selection-start-line="169" selection-start-column="21" selection-end-line="169" selection-end-column="21" />
+        <state relative-caret-position="233">
+          <caret line="287" column="65" selection-start-line="287" selection-start-column="65" selection-end-line="287" selection-end-column="65" />
         </state>
       </provider>
     </entry>

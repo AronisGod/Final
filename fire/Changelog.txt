@@ -9,4 +9,9 @@
 		input into ConjugateGradient algorithm
 
 5/9/19 -- Aron
-	+ROutine to build A
+	+ROutine to build A called "buildA()"
+	+Completed poissonPressure
+	*Modified "advect()" to instead update all velXYZ & Y at the same time
+	+added a structure holding the grid normalized gradients at every cell called gridNorm
+	+created data structure holding discontinuity corrections to pass into Trilerp
+	

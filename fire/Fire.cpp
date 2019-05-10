@@ -142,6 +142,44 @@ Vector3d Fire::vort(int i, int j, int k) {
     return Vector3d(w1, w2, w3);
 }
 
+
+array<double, 3> edge(int n, int dn) {
+    double C = 0;
+    if (grid[n] > 0 && newGrid[n] > 0) {     //Calculates Ghost values for velocities crossing barrier
+        if (grid[n + dn] <= 0) C = (ph/pf - 1)*S;
+    }
+    else if (grid[n] <= 0 && newGrid[n] <= 0) {
+        if (grid[n + dn] > 0) C = (pf/ph - 1)*S;
+    }
+    else if (grid[n] > 0 && newGrid[n] <= 0) {
+        if (grid[n + dn] > 0) C = (pf/ph - 1)*S;
+    }
+    else {
+        if (grid[n + dn] > 0) C = (ph/pf - 1)*S;
+    }
+    array<double, 3> temp = (*gridNorm[n + dn]);
+    for (int l = 0; l < 3; l++) temp[l] = temp[l]*C;
+    if(!C) temp = {1, 1, 1};
+    return temp;
+}
+
+
+double Fire::triLerp(int x, int y, int z, double dx, double dy, double dz, vector<double> &arr, array<double, 8> *Cor) {
+    int n = x*N*N + y*N + z;
+    return    (1 - dx) * (1 - dy) * (1 - dz) * arr[n]           * (*Cor)[0] +
+
+              dx       * (1 - dy) * (1 - dz) * arr[n + N*N]     * (*Cor)[4] +
+              (1 - dx) * dy       * (1 - dz) * arr[n + N]       * (*Cor)[2] +
+              (1 - dx) * (1 - dy) * dz       * arr[n + 1]       * (*Cor)[1] +
+
+              dx       * dy       * (1 - dz) * arr[n + N*N + N] * (*Cor)[6] +
+              dx       * (1 - dy) * dz       * arr[n + N*N + 1] * (*Cor)[5] +
+              (1 - dx) * dy       * dz       * arr[n + N + 1]   * (*Cor)[3] +
+
+              dx       * dy       * dz       * arr[n + N*N + N + 1] * (*Cor)[7];
+}
+
+
 void Fire::advect() {
 
     // solve advection
@@ -154,9 +192,10 @@ void Fire::advect() {
                 // we divide by "h" to get units of 'cells / time'
                 // go backwards along characteristic flow line
                 // --to first order this means to backwards along the velocity field
-                float newI = i - dt * velX[i*N*N + j*N + k] / h;
-                float newJ = j - dt * velY[i*N*N + j*N + k] / h;
-                float newK = k - dt * velZ[i*N*N + j*N + k] / h;
+                int n = i*N*N + j*N + k;
+                float newI = i - dt * velX[n] / h;
+                float newJ = j - dt * velY[n] / h;
+                float newK = k - dt * velZ[n] / h;
 
                 int x = (int) newI;
                 int y = (int) newJ;
@@ -166,50 +205,30 @@ void Fire::advect() {
                 float dy = newJ - y;
                 float dz = newK - z;
 
-                array<array<double, 7>, 3> corrections;
-                for ()
+                array<array<double, 8>, 3> corrections;
+                for (array<double, 8> &arr : corrections) arr.fill(0);
+                array<double, 3> temp;
+                for (int o = 0; o < 2; o++) {
+                    for (int p = 0; p < 2; p++) {
+                        for(int q = 0; q < 2; q++) {
+                            int dn = o*N*N + p*N + q;
+                            temp = edge(n, dn);
+                            int l = o*4 + p*2 + q;
+                            corrections[0][l] = temp[0];
+                            corrections[1][l] = temp[1];
+                            corrections[2][l] = temp[2];
+                        }
+                    }
+                }
 
-                velNewX[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, velX, 0);
-                velNewY[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, velY, 1);
-                velNewZ[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, velZ, 2);
-                newY[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, Y, 3) - dt*k;
+                velNewX[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, velX, &corrections[0]);
+                velNewY[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, velY, &corrections[1]);
+                velNewZ[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, velZ, &corrections[2]);
+                newY[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, Y) - dt*k;
             }
         }
     }
 }
-
-double edge(int axis, int n, int dn) {
-    if (grid[n] > 0 && newGrid[n] > 0) {     //Calculates Ghost values for velocities crossing barrier
-        if (grid[n + dn] <= 0) return (ph/pf - 1)*S*(*gridNorm[n + dn])[axis];
-    }
-    else if (grid[n] <= 0 && newGrid[n] <= 0) {
-        if (grid[n + dn] > 0) return (pf/ph - 1)*S*(*gridNorm[n + dn])[axis];
-    }
-    else if (grid[n] > 0 && newGrid[n] <= 0) {
-        if (grid[n + dn] > 0) return (pf/ph - 1)*S*(*gridNorm[n + dn])[axis];
-    }
-    else {
-        if (grid[n + dn] > 0) return (ph/pf - 1)*S*(*gridNorm[n + dn])[axis];
-        return 0;
-    }
-}
-
-
-double Fire::triLerp(int x, int y, int z, double dx, double dy, double dz, vector<double> &arr, int axis) {
-    int n = x*N*N + y*N + z;
-    return    (1 - dx) * (1 - dy) * (1 - dz) * arr[n] +
-
-              dx       * (1 - dy) * (1 - dz) * arr[n + N*N] +
-              (1 - dx) * dy       * (1 - dz) * arr[n + N] +
-              (1 - dx) * (1 - dy) * dz       * arr[n + 1] +
-
-              dx       * dy       * (1 - dz) * arr[n + N*N + N] +
-              dx       * (1 - dy) * dz       * arr[n + N*N + 1] +
-              (1 - dx) * dy       * dz       * arr[n + N + 1] +
-
-              dx       * dy       * dz       * arr[n + N*N + N + 1];
-}
-
 
 
 double Fire::norm(double x, double y, double z) {
@@ -228,28 +247,32 @@ void Fire::poissonPressure() {
                 // Builds b vector
                 n = i*N*N + j*N + k;
                 uGrad =          //Sum of (u_n+1 - u_n) for n(={x, y, z}
-                    velNewX[(i+1)*N*N + j*N     + k]   - velNewX[i*N*N + j*N + k] +
-                    velNewY[i*N*N     + (j+1)*N + k]   - velNewY[i*N*N + j*N + k] +
-                    velNewZ[i*N*N     + j*N     + k+1] - velNewZ[i*N*N + j*N + k];
-                if (grid[n] > 0 && grid[n] < h*1.5) {     //Calculates Ghost values for velocities crossing barrier
-                    if (grid[n + N*N] <= 0) uGrad += (ph/pf - 1)*S*(*gridNorm[n])[0];
-                    if (grid[n + N] <= 0)   uGrad += (ph/pf - 1)*S*(*gridNorm[n])[1];
-                    if (grid[n + 1] <= 0)   uGrad += (ph/pf - 1)*S*(*gridNorm[n])[2];
+                    velNewX[n + N*N] - velNewX[n] +
+                    velNewY[n + N]   - velNewY[n] +
+                    velNewZ[n + 1]   - velNewZ[n];
+
+                // Handles corrections due to the discontinuity at the surface
+                array<double, 3> temp;
+                for (int B = 0; B < 3; B++) {
+                    temp = edge(n, (int)pow((float)N, 2-B));
+                    if(temp[0] != 1)
+                        uGrad += temp[B];
                 }
-                else if (grid[n] <= 0 && grid[n] > -h*1.5) {
-                    if (grid[n + N*N] > 0) uGrad += (pf/ph - 1)*S*(*gridNorm[n])[0];
-                    if (grid[n + N] > 0)   uGrad += (pf/ph - 1)*S*(*gridNorm[n])[1];
-                    if (grid[n + 1] > 0)   uGrad += (pf/ph - 1)*S*(*gridNorm[n])[2];
-                }
+                // Handles particularly the case where the surface is updated across the point
+                temp = edge(n, 0);
+                if (temp[0] != 1) uGrad += temp[0] + temp[1] + temp[2];
+
                 uGrad = uGrad*C;
                 if (grid[n] > 0) uGrad = uGrad*pf/ph;
                 b(n) = uGrad;
             }
         }
     }
-
-    ConjugateGradient<SparseMatrix<double>, Lower|Upper, IncompleteCholesky<double, Lower|Upper>> cg;
-    cg.compute(A);
+    if (false) {
+        buildA();
+        ConjugateGradient<SparseMatrix<double>, Lower|Upper, IncompleteCholesky<double, Lower|Upper>> cg;
+        cg.compute(A);
+    }
     p = cg.solve(b);
     std::cout << "#iterations:     " << cg.iterations() << std::endl;
     std::cout << "estimated error: " << cg.error()      << std::endl;

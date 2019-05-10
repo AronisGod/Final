@@ -4,21 +4,46 @@
 
 #include "Fire.h"
 
-
-
-
-
-
-
-void Fire::update() {
-
-    // solve advection
-
-
+Fire::Fire() {
+    N = 160;
+    h = 0.05; // (m) grid spacing
+    vMax = 30;  // (m/s) cap on velocity magnitude
+    dt = h / vMax / 2; // (s) size of time steps for front propagation. Fluids are updated with 5*dt
+    S = 0.1; // (m/s) Parameter controlling velocity of front propagation(Combustion/Reaction Rate)
+    Tair = 300; // (K) temperature of ambient environment
+    alpha = 0.15; // (m/Ks^2)positive constant
+    cT = 3000; // (K/s) Cooling constant
+    epsh = 60;
+    epsf = 16;
+    ph = 0.01; // (kg/m^3) density of the "hot products"
+    pf = 0.1; // (kg/m^3) density of the "fuel vapor"
+    k = 1; // constant for dY/dt (change in time since reaction {at a point in space} over change in time) thus unit-less
+    Tignition = 678; // (K) Temperature at ignition
+    Tmax = 2253;  // (K) Maximum temperature
 
 }
 
-void Fire::propagateFront(double w1, double w2, double w3) {
+void Fire::buildA() {
+    int m = N*N*N;
+    p = VectorXd(m);
+    A = SparseMatrix<double>(m,m);
+    typedef Triplet<double> T;
+    vector<T> list;
+    for (int idx = 0; idx < m; idx++) {
+        list.emplace_back(idx, idx, -6);
+        list.emplace_back(idx + 1,   idx,       1);
+        list.emplace_back(idx + N,   idx,       1);
+        list.emplace_back(idx + N*N, idx,       1);
+        list.emplace_back(idx,       idx + 1,   1);
+        list.emplace_back(idx,       idx + N,   1);
+        list.emplace_back(idx,       idx + N*N, 1);
+    }
+    A.setFromTriplets(list.begin(), list.end());
+}
+
+
+
+void Fire::propagateFront() {
     for (int i = 1; i <= N; i++) {
         for (int j = 1; j <= N; j++) {
             for (int k = 1; k <= N; k++) {
@@ -28,14 +53,19 @@ void Fire::propagateFront(double w1, double w2, double w3) {
                 ny = (grid[i*N*N     + (j+1)*N + k]   - grid[i*N*N     + (j-1)*N + k])   / (2*h);
                 nz = (grid[i*N*N     + j*N     + k+1] - grid[i*N*N     + j*N     + k-1]) / (2*h);
                 // components of normalized surface normal
-                double nnx = nx / norm(nx, ny, nz);
-                double nny = ny / norm(nx, ny, nz);
-                double nnz = nz / norm(nx, ny, nz);
+                double Norm = norm(nx, ny, nz);
+                double nnx = nx / Norm;
+                double nny = ny / Norm;
+                double nnz = nz / Norm;
+
+                *gridNorm[i*N*N + j*N + k] = {nnx, nny, nnz};
+
+                double w1, w2, w3;
 
                 //    // components of velocity
-                //    double w1 = u1 + S * nnx;
-                //    double w2 = u2 + S * nny;
-                //    double w3 = u3 + S * nnz;
+                w1 = velCX[i * N * N + j * N + k] + S * nnx;
+                w2 = velCY[i * N * N + j * N + k] + S * nny;
+                w3 = velCZ[i * N * N + j * N + k] + S * nnz;
 
                 // upwind finite difference approximations for partial derivatives
                 double phix, phiy, phiz;
@@ -58,7 +88,7 @@ void Fire::propagateFront(double w1, double w2, double w3) {
 
 
                 // update implicit surface function
-                grid[i*N*N + j*N + k] = grid[i*N*N + j*N + k]
+                newGrid[i*N*N + j*N + k] = grid[i*N*N + j*N + k]
                                                   - dt * (w1 * phix + w2 * phiy + w3 * phiz);
 
 
@@ -112,7 +142,7 @@ Vector3d Fire::vort(int i, int j, int k) {
     return Vector3d(w1, w2, w3);
 }
 
-void Fire::advect(vector<double> &arr, vector<double> &arrOld) {
+void Fire::advect() {
 
     // solve advection
 
@@ -135,7 +165,10 @@ void Fire::advect(vector<double> &arr, vector<double> &arrOld) {
                 float dy = newJ - y;
                 float dz = newK - z;
 
-                arr[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, arrOld);
+                velNewX[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, velX);
+                velNewY[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, velY);
+                velNewZ[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, velZ);
+                newY[i*N*N + j*N + k] = triLerp(x, y, z, dx, dy, dz, Y);
 
             }
         }
@@ -158,10 +191,6 @@ double Fire::triLerp(int x, int y, int z, double dx, double dy, double dz, vecto
 }
 
 
-void Fire::flow() {
-
-}
-
 
 double Fire::norm(double x, double y, double z) {
     return sqrt(x*x + y*y + z*z);
@@ -169,28 +198,28 @@ double Fire::norm(double x, double y, double z) {
 
 void Fire::poissonPressure() {
     int m = N*N*N;
-    VectorXd x(m), b(m);
-    SparseMatrix<double> A(m,m);
-// fill b
+    VectorXd b(m);
+
     double uGrad, C = ph*h/dt;
     int n;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
+                // Builds b vector
                 n = i*N*N + j*N + k;
-                uGrad =
+                uGrad =          //Sum of (u_n+1 - u_n) for n(={x, y, z}
                     velNewX[(i+1)*N*N + j*N     + k]   - velNewX[i*N*N + j*N + k] +
                     velNewY[i*N*N     + (j+1)*N + k]   - velNewY[i*N*N + j*N + k] +
                     velNewZ[i*N*N     + j*N     + k+1] - velNewZ[i*N*N + j*N + k];
-                if (grid[n] > 0 && grid[n] < h*1.5) {
-                    if (grid[n + N*N] <= 0) uGrad += (ph/pf - 1)*S;
-                    if (grid[n + N] <= 0)   uGrad += (ph/pf - 1)*S;
-                    if (grid[n + 1] <= 0)   uGrad += (ph/pf - 1)*S;
+                if (grid[n] > 0 && grid[n] < h*1.5) {     //Calculates Ghost values for velocities crossing barrier
+                    if (grid[n + N*N] <= 0) uGrad += (ph/pf - 1)*S*(*gridNorm[n])[0];
+                    if (grid[n + N] <= 0)   uGrad += (ph/pf - 1)*S*(*gridNorm[n])[1];
+                    if (grid[n + 1] <= 0)   uGrad += (ph/pf - 1)*S*(*gridNorm[n])[2];
                 }
                 else if (grid[n] <= 0 && grid[n] > -h*1.5) {
-                    if (grid[n + N*N] > 0) uGrad += (pf/ph - 1)*S;
-                    if (grid[n + N] > 0)   uGrad += (pf/ph - 1)*S;
-                    if (grid[n + 1] > 0)   uGrad += (pf/ph - 1)*S;
+                    if (grid[n + N*N] > 0) uGrad += (pf/ph - 1)*S*(*gridNorm[n])[0];
+                    if (grid[n + N] > 0)   uGrad += (pf/ph - 1)*S*(*gridNorm[n])[1];
+                    if (grid[n + 1] > 0)   uGrad += (pf/ph - 1)*S*(*gridNorm[n])[2];
                 }
                 uGrad = uGrad*C;
                 if (grid[n] > 0) uGrad = uGrad*pf/ph;
@@ -201,9 +230,86 @@ void Fire::poissonPressure() {
 
     ConjugateGradient<SparseMatrix<double>, Lower|Upper, IncompleteCholesky<double, Lower|Upper>> cg;
     cg.compute(A);
-    x = cg.solve(b);
+    p = cg.solve(b);
     std::cout << "#iterations:     " << cg.iterations() << std::endl;
     std::cout << "estimated error: " << cg.error()      << std::endl;
-// update b, and solve again
-    x = cg.solve(b);
 }
+
+
+void Fire::updateVCenter() {
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                // Builds velC vectors out of the vel vectors
+                velCX[i * N * N + j * N + k] = (velX[(i-1) * N * N + j * N + k] + velX[i * N * N + j * N + k]) / 2;
+                velCY[i * N * N + j * N + k] = (velY[i * N * N + (j-1) * N + k] + velY[i * N * N + j * N + k]) / 2;
+                velCZ[i * N * N + j * N + k] = (velZ[i * N * N + j * N + k-1] + velZ[i * N * N + j * N + k]) / 2;
+            }
+        }
+    }
+
+
+}
+
+void Fire::updateY() {
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                // Builds velC vectors out of the vel vectors
+                newY[i * N * N + j * N + k] -= dt * k;
+            }
+        }
+    }
+}
+
+void Fire::updateT() {
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                // Builds velC vectors out of the vel vectors
+                double Y = newY[i * N * N + j * N + k];
+                if (0.9 < Y && Y < 1.0) {
+                    T[i * N * N + j * N + k] = Tignition + (1 - Y) * (Tmax - Tignition) / 0.1;
+                } else if (Y < 0.9) {
+                    T[i * N * N + j * N + k] = Tignition;
+                } else {
+                    T[i * N * N + j * N + k] = Tignition + (1 - Y) * (Tmax - Tignition) / 0.1 + (1 - Y) * (1 - Y);
+                }
+
+            }
+        }
+    }
+}
+
+
+
+void Fire::step() {
+
+    propagateFront();
+
+
+    addForce();
+    velX = velNewX;
+    velY = velNewY;
+    velZ = velNewZ;
+
+    advect();
+
+    velX = velNewX;
+    velY = velNewY;
+    velZ = velNewZ;
+
+    updateVCenter();
+
+    updateT();
+
+
+
+
+
+}
+
+

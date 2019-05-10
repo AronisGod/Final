@@ -20,7 +20,6 @@ Fire::Fire() {
     k = 1; // constant for dY/dt (change in time since reaction {at a point in space} over change in time) thus unit-less
     Tignition = 678; // (K) Temperature at ignition
     Tmax = 2253;  // (K) Maximum temperature
-
 }
 
 void Fire::buildA() {
@@ -37,16 +36,54 @@ void Fire::buildA() {
         list.emplace_back(idx,       idx + 1,   1);
         list.emplace_back(idx,       idx + N,   1);
         list.emplace_back(idx,       idx + N*N, 1);
+
+/*
+double Fire::hGhost(int i, int j, int k, int c) {
+    Vector3d n = *(gridNorm[i*N*N + j*N + k]);
+    Vector3d v(velX[i*N*N + j*N + k], velY[i*N*N + j*N + k], velZ[i*N*N + j*N + k]);
+
+    return v(c) - M * (1 / ph - 1 / pf) * n(c);
+}
+
+double Fire::fGhost(int i, int j, int k, int c) {
+    Vector3d n = *(gridNorm[i*N*N + j*N + k]);
+    Vector3d v(velX[i*N*N + j*N + k], velY[i*N*N + j*N + k], velZ[i*N*N + j*N + k]);
+
+    return v(c) + M * (1 / ph - 1 / pf) * n(c);
+}
+*/
+
+void Fire::buildA() {
+    int m = N*N*N;
+    p = VectorXd(m);
+    A = SparseMatrix<double>(m,m);
+    typedef Triplet<double> T;
+    vector<T> list;
+    for (int i = 1; i < N - 1; i++) {
+        for (int j = 1; i < N - 1; j++) {
+            for (int k = 1; i < N - 1; k++) {
+                int idx = i*N*N + j*N + k;
+
+                list.emplace_back(idx, idx, -6);
+                list.emplace_back(idx + 1,   idx,       1);
+                list.emplace_back(idx + N,   idx,       1);
+                list.emplace_back(idx + N*N, idx,       1);
+                list.emplace_back(idx,       idx + 1,   1);
+                list.emplace_back(idx,       idx + N,   1);
+                list.emplace_back(idx,       idx + N*N, 1);
+            }
+        }
     }
+
     A.setFromTriplets(list.begin(), list.end());
 }
 
 
 
 void Fire::propagateFront() {
-    for (int i = 1; i <= N; i++) {
-        for (int j = 1; j <= N; j++) {
-            for (int k = 1; k <= N; k++) {
+    for (int i = 1; i < N; i++) {
+        for (int j = 1; j < N; j++) {
+            for (int k = 1; k < N; k++) {
                 double nx, ny, nz;
                 // components of the gradient
                 nx = (grid[(i+1)*N*N + j*N     + k]   - grid[(i-1)*N*N + j*N     + k])   / (2*h);
@@ -58,7 +95,12 @@ void Fire::propagateFront() {
                 double nny = ny / Norm;
                 double nnz = nz / Norm;
 
-                *gridNorm[i*N*N + j*N + k] = {nnx, nny, nnz};
+                Vector3d nhat;
+                nhat(0) = nnx;
+                nhat(1) = nny;
+                nhat(2) = nnz;
+
+                gridNorm[i*N*N + j*N + k] = &nhat;
 
                 double w1, w2, w3;
 
@@ -90,10 +132,6 @@ void Fire::propagateFront() {
                 // update implicit surface function
                 newGrid[i*N*N + j*N + k] = grid[i*N*N + j*N + k]
                                                   - dt * (w1 * phix + w2 * phiy + w3 * phiz);
-
-
-                // update implicit surface equation
-
             }
         }
 
@@ -122,9 +160,9 @@ void Fire::addForce() {
                 Vector3d f = fconf;
 
                 // add in contribution to velocity
-                velNewX[i*N*N + j*N + k] = velX[i*N*N + j*N + k] + dt*f(0);
-                velNewY[i*N*N + j*N + k] = velY[i*N*N + j*N + k] + dt*f(1);
-                velNewZ[i*N*N + j*N + k] = velZ[i*N*N + j*N + k] + dt*f(2);
+                velX[i*N*N + j*N + k] = velX[i*N*N + j*N + k] + dt*f(0);
+                velY[i*N*N + j*N + k] = velY[i*N*N + j*N + k] + dt*f(1);
+                velZ[i*N*N + j*N + k] = velZ[i*N*N + j*N + k] + dt*f(2);
             }
         }
     }
@@ -141,7 +179,6 @@ Vector3d Fire::vort(int i, int j, int k) {
           - velCX[i*N*N     + (j+1)*N + k] + velCX[i*N*N     + (j-1)*N + k])/(2*h);
     return Vector3d(w1, w2, w3);
 }
-
 
 array<double, 3> edge(int n, int dn) {
     double C = 0;
@@ -182,11 +219,11 @@ double Fire::triLerp(int x, int y, int z, double dx, double dy, double dz, vecto
 
 void Fire::advect() {
 
-    // solve advection
+        // solve advection
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            for (int k = 0; k < N; k++) {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                for (int k = 0; k < N; k++) {
 
                 // velX is in world space units of 'distance / time'
                 // we divide by "h" to get units of 'cells / time'
@@ -197,13 +234,13 @@ void Fire::advect() {
                 float newJ = j - dt * velY[n] / h;
                 float newK = k - dt * velZ[n] / h;
 
-                int x = (int) newI;
-                int y = (int) newJ;
-                int z = (int) newK;
+                    int x = (int) newI;
+                    int y = (int) newJ;
+                    int z = (int) newK;
 
-                float dx = newI - x;
-                float dy = newJ - y;
-                float dz = newK - z;
+                    float dx = newI - x;
+                    float dy = newJ - y;
+                    float dz = newK - z;
 
                 array<array<double, 8>, 3> corrections;
                 for (array<double, 8> &arr : corrections) arr.fill(0);
@@ -230,6 +267,7 @@ void Fire::advect() {
     }
 }
 
+    }
 
 double Fire::norm(double x, double y, double z) {
     return sqrt(x*x + y*y + z*z);
@@ -279,6 +317,7 @@ void Fire::poissonPressure() {
 }
 
 
+
 void Fire::updateVCenter() {
 
     for (int i = 0; i < N; i++) {
@@ -295,6 +334,17 @@ void Fire::updateVCenter() {
 
 }
 
+void Fire::updateY() {
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                // Builds velC vectors out of the vel vectors
+                newY[i * N * N + j * N + k] -= dt * k0;
+            }
+        }
+    }
+}
 
 void Fire::updateT() {
 
@@ -324,15 +374,17 @@ void Fire::step() {
 
 
     addForce();
-    velX = velNewX;
-    velY = velNewY;
-    velZ = velNewZ;
+
 
     advect();
 
+    poissonPressure();
+
     velX = velNewX;
     velY = velNewY;
     velZ = velNewZ;
+
+
 
     updateVCenter();
 

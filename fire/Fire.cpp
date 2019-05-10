@@ -8,6 +8,7 @@
 
 
 
+
 void Fire::buildA(int N) {
     int m = N*N*N;
     A = SparseMatrix<double>(m,m);
@@ -216,6 +217,7 @@ void Fire::poissonPressure() {
     std::cout << "estimated error: " << cg.error()      << std::endl;
 // update b, and solve again
     x = cg.solve(b);
+
 }
 
 
@@ -279,16 +281,15 @@ void Fire::step() {
     velY = velNewY;
     velZ = velNewZ;
 
-    advect(velNewX, velX);
-    advect(velNewY, velY);
-    advect(velNewZ, velZ);
+    advect();
+
 
 
     velX = velNewX;
     velY = velNewY;
     velZ = velNewZ;
 
-    advect(newY, Y);
+
 
     updateVCenter();
 

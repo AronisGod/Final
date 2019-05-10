@@ -11,16 +11,15 @@
   uniform sampler2D tex1;
 	out vec4 color;
 	void main(void) {
-    float blr = 0.1/4.0;
-    float stp = 8.0;
+    float blr = .1/4.0;
+    float stp = 10.0;
 		float pix = .2*texture(tex1,vec2(gl_FragCoord.x,gl_FragCoord.y)/512.0).w
     +blr*texture(tex1,vec2(gl_FragCoord.x+stp,gl_FragCoord.y+stp)/512.0).w
     +blr*texture(tex1,vec2(gl_FragCoord.x+stp,gl_FragCoord.y-stp)/512.0).w
     +blr*texture(tex1,vec2(gl_FragCoord.x-stp,gl_FragCoord.y+stp)/512.0).w
     +blr*texture(tex1,vec2(gl_FragCoord.x-stp,gl_FragCoord.y-stp)/512.0).w;
-    //float c = smoothstep(.7,.95,sin(gl_FragCoord.x/5.0))+smoothstep(.7,.95,sin(gl_FragCoord.y/5.0));
-    //color = vec4(c*pix,c*pix,c*pix,1.0);
     color = vec4(pix,pix/2.0,pix/7.0,.05);
+    
     return;
 	}
 </script>
@@ -40,7 +39,7 @@
 	var tex1;
 	var screen_size = 512;
   var t = 0;
-/*function mutate(i,j) {
+function mutate(i,j) {
   var ratio  = .4;
   var speed = .1;
   var vert_ratio = 10;
@@ -74,49 +73,6 @@
         }
       }
     }
-  }*/
-function mutate(i,j,k) {
-  var ratio  = .4;
-  var speed = .1;
-  var vert_ratio = 10;
-  if ( pixel[i*N*N + j*N + k] == 0) {
-    if (pixel[(i-1)*N*N + (j)*N + k] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 255;
-    else if (pixel[(i+1)*N*N + (j)*N + k] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 255;
-    else if (pixel[(i)*N*N + (j-1)*N + k] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 255;
-    else if (pixel[(i)*N*N + (j+1)*N + k] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 255;
-    else if (pixel[(i)*N*N + (j)*N + k+1] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 255;
-    else if (pixel[(i)*N*N + (j)*N + k-1] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 255;
-  } else {
-    if (pixel[(i-1)*N*N + (j)*N + k] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 0;
-    else if (pixel[(i+1)*N*N + (j)*N + k] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 0;
-    else if (pixel[(i)*N*N + (j-1)*N + k] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 0;
-    else if (pixel[(i)*N*N + (j+1)*N + k] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 0;
-    else if (pixel[(i)*N*N + (j)*N + k+1] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 0;
-    else if (pixel[(i)*N*N + (j)*N + k-1] > 0 && u01() vert_ratio*speed*ratio) pixel[i*N*N + j*N + k] = 0;
-  }
-  if ( i == 1 && ( j > 20 && j < 44 ) ) {
-    pixel[((i)*N+j)] = 255;
-  }
-}
-  function mc() {
-    for (var i = 1; i < N-1; i++) {
-      for (var j = 1; j < N-1; j++) {
-        for (var k = 1; k < N-1; k++) {
-          if ( (i + j) % 2 == 0) {
-            mutate(i,j,k);
-          }
-        }
-      }
-    }
-    for (var i = 1; i < N-1; i++) {
-      for (var j = 1; j < N-1; j++) {
-        for (var k = 1; k < N-1; k++) {
-          if ( (i + j) % 2 == 1) {
-            mutate(i,j,k);
-          }
-        }
-      }
-    }
   }
   function drawScene() {
     t = (new Date().getTime() - start_time)/1000.0;
@@ -134,16 +90,6 @@ function mutate(i,j,k) {
 	function u01() {
 		return Math.random();
 	}
-  function makeArray(w, h, val) {
-    var arr = [];
-    for(i = 0; i < h; i++) {
-      arr[i] = [];
-			for(j = 0; j < w; j++) {
-				arr[i][j] = val;
-			}
-		}
-		return arr;
-	}
 	function make_shader(vertshader, fragshader) {
 		var sp = gl.createProgram();
         gl.attachShader(sp, getShader(gl, vertshader)); gl.attachShader(sp, getShader(gl, fragshader));
@@ -158,9 +104,10 @@ function mutate(i,j,k) {
   //const pixel = new Uint8Array(N*N);
   const pixel = new Uint8Array(N*N*N);
 	function loadTextures() {
-		gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex1);
-    //gl.texImage2D(gl.TEXTURE_2D, 0, gl.ALPHA, N, N, 0, gl.ALPHA, gl.UNSIGNED_BYTE,pixel);
-    gl.texImage3D(gl.TEXTURE_2D, 0, gl.ALPHA, N, N, N, 0, gl.ALPHA, gl.UNSIGNED_BYTE,pixel);
+		gl.activeTexture(gl.TEXTURE0); 
+    gl.bindTexture(gl.TEXTURE_2D, tex1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.ALPHA, N, N, 0, gl.ALPHA, gl.UNSIGNED_BYTE,pixel);
+    //gl.texImage3D(gl.TEXTURE_2D, 0, gl.ALPHA, N, N, N, 0, gl.ALPHA, gl.UNSIGNED_BYTE,pixel);
 	}
   function webGLStart() {
         var canvas = document.getElementById("mycanvas");
@@ -179,7 +126,8 @@ function mutate(i,j,k) {
 		ebo = [0,1,2,1,2,3];
 		SVAO = gl.createVertexArray(); SL = 6;
 		gl.bindVertexArray(SVAO);
-		gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+		gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); 
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 		gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0); gl.enableVertexAttribArray(0);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,  new Uint16Array(ebo), gl.STATIC_DRAW);
 		tex_framebuffer = gl.createFramebuffer();

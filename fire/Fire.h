@@ -28,6 +28,9 @@ class Fire {
     double alpha; // positive constant
     double eps;
     double ph, pf; // density of the "hot products" & "fuel vapor" respectively
+    double k; // constant for Y
+    double Tignition; // Temperature at ignition
+    double Tmax;  // maximum temperature
     int N; // Size of grid: grid will be 4 by N by N by N (4 because we have 4 quantities to keep track of)
     vector<double> grid; // grid with implicit surface at current time step
     vector<array<double, 3>*> gridNorm; // The normalized gradient field of the grid at next time step
@@ -42,19 +45,30 @@ class Fire {
     vector<double> velY; // array with y-coordinate of velocities defined across faces of 'grid'
     vector<double> velZ; // array with z-coordinate of velocities defined across faces of 'grid'
 
+
     // centered velocities
     vector<double> velCX; // array with x-coordinate of velocities defined across faces of 'grid'
     vector<double> velCY; // array with y-coordinate of velocities defined across faces of 'grid'
     vector<double> velCZ; // array with z-coordinate of velocities defined across faces of 'grid'
 
+    // Y is a number such that 1- Y is the time since crossing the barrier
+    vector<double> Y;
+    vector<double> newY;
 
-    void update();
+    // temperatures
+    vector<double> T;
+
+
+
+    void updateY();
+
+    void updateT();
 
     void propagateFront();
 
     double norm(double x, double y, double z);
 
-    void flow();
+    void step();
 
     void advect(vector<double> &arr, vector<double> &arrOld);
 
@@ -65,6 +79,8 @@ class Fire {
     Vector3d vort(int i, int j, int k);
 
     void poissonPressure();
+
+    void updateVCenter();
 
     void buildA(int N);
 

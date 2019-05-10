@@ -25,13 +25,7 @@ void Fire::buildA(int N) {
     A.setFromTriplets(list.begin(), list.end());
 }
 
-void Fire::update() {
 
-    // solve advection
-
-
-
-}
 
 void Fire::propagateFront() {
     for (int i = 1; i <= N; i++) {
@@ -50,10 +44,12 @@ void Fire::propagateFront() {
 
                 *gridNorm[i*N*N + j*N + k] = {nnx, nny, nnz};
 
-                    // components of velocity
-                    double w1 = velCX[i*N*N + j*N + k] + S * nnx;
-                    double w2 = velCY[i*N*N + j*N + k] + S * nny;
-                    double w3 = velCZ[i*N*N + j*N + k] + S * nnz;
+                double w1, w2, w3;
+
+                //    // components of velocity
+                w1 = velCX[i * N * N + j * N + k] + S * nnx;
+                w2 = velCY[i * N * N + j * N + k] + S * nny;
+                w3 = velCZ[i * N * N + j * N + k] + S * nnz;
 
                 // upwind finite difference approximations for partial derivatives
                 double phix, phiy, phiz;
@@ -76,7 +72,7 @@ void Fire::propagateFront() {
 
 
                 // update implicit surface function
-                grid[i*N*N + j*N + k] = grid[i*N*N + j*N + k]
+                newGrid[i*N*N + j*N + k] = grid[i*N*N + j*N + k]
                                                   - dt * (w1 * phix + w2 * phiy + w3 * phiz);
 
 
@@ -176,10 +172,6 @@ double Fire::triLerp(int x, int y, int z, double dx, double dy, double dz, vecto
 }
 
 
-void Fire::flow() {
-
-}
-
 
 double Fire::norm(double x, double y, double z) {
     return sqrt(x*x + y*y + z*z);
@@ -225,3 +217,87 @@ void Fire::poissonPressure() {
 // update b, and solve again
     x = cg.solve(b);
 }
+
+
+void Fire::updateVCenter() {
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                // Builds velC vectors out of the vel vectors
+                velCX[i * N * N + j * N + k] = (velX[(i-1) * N * N + j * N + k] + velX[i * N * N + j * N + k]) / 2;
+                velCY[i * N * N + j * N + k] = (velY[i * N * N + (j-1) * N + k] + velY[i * N * N + j * N + k]) / 2;
+                velCZ[i * N * N + j * N + k] = (velZ[i * N * N + j * N + k-1] + velZ[i * N * N + j * N + k]) / 2;
+            }
+        }
+    }
+
+
+}
+
+void Fire::updateY() {
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                // Builds velC vectors out of the vel vectors
+                newY[i * N * N + j * N + k] -= dt * k;
+            }
+        }
+    }
+}
+
+void Fire::updateT() {
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                // Builds velC vectors out of the vel vectors
+                double Y = newY[i * N * N + j * N + k];
+                if (0.9 < Y && Y < 1.0) {
+                    T[i * N * N + j * N + k] = Tignition + (1 - Y) * (Tmax - Tignition) / 0.1;
+                } else if (Y < 0.9) {
+                    T[i * N * N + j * N + k] = Tignition;
+                } else {
+                    T[i * N * N + j * N + k] = Tignition + (1 - Y) * (Tmax - Tignition) / 0.1 + (1 - Y) * (1 - Y);
+                }
+
+            }
+        }
+    }
+}
+
+
+
+void Fire::step() {
+
+    propagateFront();
+
+
+    addForce();
+    velX = velNewX;
+    velY = velNewY;
+    velZ = velNewZ;
+
+    advect(velNewX, velX);
+    advect(velNewY, velY);
+    advect(velNewZ, velZ);
+
+
+    velX = velNewX;
+    velY = velNewY;
+    velZ = velNewZ;
+
+    advect(newY, Y);
+
+    updateVCenter();
+
+    updateT();
+
+
+
+
+
+}
+
+

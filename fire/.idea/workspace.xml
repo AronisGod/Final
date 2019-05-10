@@ -12,6 +12,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a6f860c9-3264-437f-bd6e-798d1a6679cd" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Fire.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Fire.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Fire.h" beforeDir="false" afterPath="$PROJECT_DIR$/Fire.h" afterDir="false" />
     </list>
@@ -43,11 +44,11 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Release" />
   <component name="FileEditorManager">
     <leaf>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Fire.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="100">
-              <caret line="56" column="16" lean-forward="true" selection-start-line="56" selection-start-column="16" selection-end-line="56" selection-end-column="16" />
+            <state relative-caret-position="170">
+              <caret line="29" selection-start-line="29" selection-end-line="29" />
               <folding>
                 <element signature="e#226#254#0" expanded="true" />
               </folding>
@@ -55,11 +56,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Fire.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2395">
-              <caret line="148" column="35" lean-forward="true" selection-start-line="148" selection-start-column="35" selection-end-line="148" selection-end-column="35" />
+            <state relative-caret-position="17">
+              <caret line="258" selection-start-line="258" selection-end-line="258" />
             </state>
           </provider>
         </entry>
@@ -153,12 +154,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1557360595415</updated>
-      <workItem from="1557360606542" duration="28252000" />
+      <workItem from="1557360606542" duration="29047000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="28252000" />
+    <option name="totallyTimeSpent" value="29047000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
@@ -193,20 +194,20 @@
     <entry file="file://$PROJECT_DIR$/main.cpp">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/Fire.h">
+    <entry file="file://$PROJECT_DIR$/Fire.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="100">
-          <caret line="56" column="16" lean-forward="true" selection-start-line="56" selection-start-column="16" selection-end-line="56" selection-end-column="16" />
-          <folding>
-            <element signature="e#226#254#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="17">
+          <caret line="258" selection-start-line="258" selection-end-line="258" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Fire.cpp">
+    <entry file="file://$PROJECT_DIR$/Fire.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2395">
-          <caret line="148" column="35" lean-forward="true" selection-start-line="148" selection-start-column="35" selection-end-line="148" selection-end-column="35" />
+        <state relative-caret-position="170">
+          <caret line="29" selection-start-line="29" selection-end-line="29" />
+          <folding>
+            <element signature="e#226#254#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

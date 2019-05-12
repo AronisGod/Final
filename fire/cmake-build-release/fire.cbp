@@ -90,6 +90,9 @@
 		<Unit filename="C:/Users/A-ron/Desktop/184/Final/fire/Fire.h">
 			<Option target="fire"/>
 		</Unit>
+		<Unit filename="C:/Users/A-ron/Desktop/184/Final/fire/FireNew.h">
+			<Option target="fire"/>
+		</Unit>
 		<Unit filename="C:/Users/A-ron/Desktop/184/Final/fire/main.cpp">
 			<Option target="fire"/>
 		</Unit>

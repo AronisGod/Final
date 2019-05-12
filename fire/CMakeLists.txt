@@ -8,4 +8,4 @@ include_directories(.)
 add_executable(fire
         Fire.cpp
         Fire.h
-        main.cpp)
+        main.cpp FireNew.h FireNew.cpp)

@@ -27,6 +27,7 @@ class Fire {
 private:
     // Simulation Environment Parameters
     int N; // Number of cells per grid axis
+    int NNN; // N*N*N for OCD micro-optimization
     double dt; // size of time steps
     double h; // Grid cell edge length
 
@@ -99,7 +100,7 @@ public:
     // Sub calculations
     array<double, 3> edge(int n, int dn); // Returns correction to velocity at n + dn if it crosses the reaction boundary
 
-    Vector3d vort(int n);    // Returns the curl of Velocity at grid index n AKA the vorticity
+    Vector3d vort(int i, int j, int k);    // Returns the curl of Velocity at grid index n AKA the vorticity
 
     void updateVCenter();    // Updates Velocity field defined at cell centers
 
@@ -110,6 +111,7 @@ public:
 
     double norm(double x, double y, double z);        // magnitude of vector with given components
 
+    inline int clamp(int in) {return min(max(0, in), N-1);}
 };
 
 

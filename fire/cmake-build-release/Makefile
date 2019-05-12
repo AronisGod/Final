@@ -111,14 +111,88 @@ depend:
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 1
 .PHONY : depend
 
+#=============================================================================
+# Target rules for targets named fire
+
+# Build rule for target.
+fire: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 /nologo -$(MAKEFLAGS) fire
+.PHONY : fire
+
+# fast build rule for target.
+fire\fast:
+	$(MAKE) -f CMakeFiles\fire.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\fire.dir\build
+.PHONY : fire\fast
+
+Fire.obj: Fire.cpp.obj
+
+.PHONY : Fire.obj
+
+# target to build an object file
+Fire.cpp.obj:
+	$(MAKE) -f CMakeFiles\fire.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\fire.dir\Fire.cpp.obj
+.PHONY : Fire.cpp.obj
+
+Fire.i: Fire.cpp.i
+
+.PHONY : Fire.i
+
+# target to preprocess a source file
+Fire.cpp.i:
+	$(MAKE) -f CMakeFiles\fire.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\fire.dir\Fire.cpp.i
+.PHONY : Fire.cpp.i
+
+Fire.s: Fire.cpp.s
+
+.PHONY : Fire.s
+
+# target to generate assembly for a file
+Fire.cpp.s:
+	$(MAKE) -f CMakeFiles\fire.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\fire.dir\Fire.cpp.s
+.PHONY : Fire.cpp.s
+
+main.obj: main.cpp.obj
+
+.PHONY : main.obj
+
+# target to build an object file
+main.cpp.obj:
+	$(MAKE) -f CMakeFiles\fire.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\fire.dir\main.cpp.obj
+.PHONY : main.cpp.obj
+
+main.i: main.cpp.i
+
+.PHONY : main.i
+
+# target to preprocess a source file
+main.cpp.i:
+	$(MAKE) -f CMakeFiles\fire.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\fire.dir\main.cpp.i
+.PHONY : main.cpp.i
+
+main.s: main.cpp.s
+
+.PHONY : main.s
+
+# target to generate assembly for a file
+main.cpp.s:
+	$(MAKE) -f CMakeFiles\fire.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\fire.dir\main.cpp.s
+.PHONY : main.cpp.s
+
 # Help Target
 help:
 	@echo The following are some of the valid targets for this Makefile:
 	@echo ... all (the default if no target is provided)
 	@echo ... clean
 	@echo ... depend
+	@echo ... fire
 	@echo ... edit_cache
 	@echo ... rebuild_cache
+	@echo ... Fire.obj
+	@echo ... Fire.i
+	@echo ... Fire.s
+	@echo ... main.obj
+	@echo ... main.i
+	@echo ... main.s
 .PHONY : help
 
 

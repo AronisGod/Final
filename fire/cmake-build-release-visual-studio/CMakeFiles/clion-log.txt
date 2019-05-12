@@ -1,4 +1,0 @@
-"C:\Program Files\JetBrains\CLion 2019.1.3\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - NMake Makefiles" C:\Users\A-ron\Desktop\184\Final\fire
--- Configuring done
--- Generating done
--- Build files have been written to: C:/Users/A-ron/Desktop/184/Final/fire/cmake-build-release-visual-studio

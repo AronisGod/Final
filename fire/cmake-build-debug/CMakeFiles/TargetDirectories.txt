@@ -1,3 +1,0 @@
-C:/Users/A-ron/Desktop/184/Final/fire/cmake-build-debug/CMakeFiles/fire.dir
-C:/Users/A-ron/Desktop/184/Final/fire/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/A-ron/Desktop/184/Final/fire/cmake-build-debug/CMakeFiles/rebuild_cache.dir

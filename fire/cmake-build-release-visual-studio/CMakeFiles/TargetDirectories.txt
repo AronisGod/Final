@@ -1,2 +1,0 @@
-C:/Users/A-ron/Desktop/184/Final/fire/cmake-build-release-visual-studio/CMakeFiles/edit_cache.dir
-C:/Users/A-ron/Desktop/184/Final/fire/cmake-build-release-visual-studio/CMakeFiles/rebuild_cache.dir

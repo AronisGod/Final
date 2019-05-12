@@ -21,11 +21,14 @@ using namespace std;
 
 
 class Fire {
-public:
-    int N; // Size of grid: grid will be 4 by N by N by N (4 because we have 4 quantities to keep track of)
+private:
+    // Simulation Environment Parameters
+    int N; // Number of cells per grid axis
     double dt; // size of time steps
+    double h; // Grid cell edge length
+
+    // Physical Processes Parameters
     double M;
-    double h; // grid spacing
     double S; // Parameter controlling velocity of front propagation(Combustion/Reaction Rate)
     double Tair; // temperature of ambient environment
     double alpha; // Buoyancy force parameter
@@ -36,84 +39,74 @@ public:
     double Tignition; // Temperature at ignition
     double Tmax;  // maximum temperature
     double vMax;  // cap on velocity magnitude
-    vector<double> grid; // grid with implicit surface at current time step
-<<<<<<< HEAD
-    vector<double> newGrid; // grid with implicit surface at next time step
-    vector<array<double, 3>*> gridNorm; // The normalized gradient field of the grid at next time step
-=======
-    vector<Vector3d*> gridNorm; // The normalized gradient field of the grid at next time step
->>>>>>> Matthew_branch
-    // We define φ to be positive in the region of space filled with fuel, negative elsewhere and zero at the reaction zone.
-    SparseMatrix<double> A;
+    double C;     // Correction for velocity discontinuity at implicit surface
+
+    // Data Structures
+    // The grid is our level set.
+    // >0 represents fuel vapor, 0 is the reaction surface, & <=0 is gaseous products of combustion
+    // Each grid cell location, (i, j, k), is defined by the (x, y, z) coordinate at it's center
+    // Indexed into as [i*N*N + j*N + k]
+    vector<double> grid; // grid at current time step
+    vector<double> newGrid; // grid at next time step
+    vector< array<double, 3>* > gridNorm; // The normalized gradient field of the grid at current time step
+
+    // Pressure field p & Coefficient matrix A used in Conjugate Gradient solver for p
     VectorXd p;
-    vector<double> velNewX; // array with x-coordinate of velocities defined across faces of 'grid'
-    vector<double> velNewY; // array with y-coordinate of velocities defined across faces of 'grid'
-    vector<double> velNewZ; // array with z-coordinate of velocities defined across faces of 'grid'
+    SparseMatrix<double> A;
 
-    vector<double> velX; // array with x-coordinate of velocities defined across faces of 'grid'
-    vector<double> velY; // array with y-coordinate of velocities defined across faces of 'grid'
-    vector<double> velZ; // array with z-coordinate of velocities defined across faces of 'grid'
-
-    vector<double> velXhG; // x coordinate of h ghost velocities
-    vector<double> velYhG; // y coordinate of h ghost velocities
-    vector<double> velZhG; // z coordinate of h ghost velocities
-
-    vector<double> velXfG; // x coordinate of f ghost velocities
-    vector<double> velYfG; // y coordinate of f ghost velocities
-    vector<double> velZfG; // z coordinate of f ghost velocities
-
-
+    // Velocity is defined at Cell faces before Center, e.g. At Cell(i,j,k) Vx is defined at (i-1/2, j, k)
+    vector<double> velX;
+    vector<double> velY;
+    vector<double> velZ;
+    // Velocity field after advection step, used in solving for p (above)
+    vector<double> velNewX;
+    vector<double> velNewY;
+    vector<double> velNewZ;
     // centered velocities
-    vector<double> velCX; // array with x-coordinate of velocities defined across faces of 'grid'
-    vector<double> velCY; // array with y-coordinate of velocities defined across faces of 'grid'
-    vector<double> velCZ; // array with z-coordinate of velocities defined across faces of 'grid'
+    vector<double> velCX;
+    vector<double> velCY;
+    vector<double> velCZ;
 
     // Y is a number such that 1- Y is the time since crossing the barrier
     vector<double> Y;
     vector<double> newY;
 
-    // temperatures
+    // Temperature field
     vector<double> T;
 
-<<<<<<< HEAD
 public:
-=======
-    Fire();
-//    Fire(double N=160, double h=0.05);
->>>>>>> Matthew_branch
-
+    //Constructor
     Fire();
 
-    void updateT();
+    // Simulation Terms
+    void propagateFront();   // Moves the reaction front forward in time
 
-    array<double, 3> edge(int, int);
+    void addForce();         // Gravity/Buoyancy/Vorticity Force Terms
 
-    void propagateFront();
+    void advect();           // Advection
 
-    double norm(double x, double y, double z);
+    void poissonPressure();  // Calculates pressure field which upholds incompressibility
 
-    void step();
+    void applyPressure();    // Applies the newly found pressure field to update our final velocity of the step
 
-    void advect();
+    void updateT();          // Updates Temperature field based on Y data (Reaction time history)
 
-    double triLerp(int x, int y, int z, double dx, double dy, double dz, vector<double> &arr, array<double, 8>* = NULL);
+    void step();             // Calculates one entire frame
 
-    void addForce();
+    // Sub calculations
+    array<double, 3> edge(int n, int dn); // Returns correction to velocity at n + dn if it crosses the reaction boundary
 
-    Vector3d vort(int i, int j, int k);
+    Vector3d vort(int n);    // Returns the curl of Velocity at grid index n AKA the vorticity
 
-    void poissonPressure();
+    void updateVCenter();    // Updates Velocity field defined at cell centers
 
-    void updateVCenter();
+    void buildA();           // Constructs the coefficient matrix used to find pressure field via Conjugate Gradient
 
-    void buildA();
-<<<<<<< HEAD
-=======
+    // Helper Functions
+    double triLerp(int x, int y, int z, double dx, double dy, double dz, vector<double> &arr, array<double, 8>* = NULL); // Tri-linear Interpolation
 
-    double hGhost(int i, int j, int k, int c);
->>>>>>> Matthew_branch
+    double norm(double x, double y, double z);        // magnitude of vector with given components
 
-    double fGhost(int i, int j, int k, int c);
 };
 
 

@@ -66,6 +66,43 @@ CMAKE_SOURCE_DIR = C:\Users\A-ron\Desktop\184\Final\fire
 CMAKE_BINARY_DIR = C:\Users\A-ron\Desktop\184\Final\fire\cmake-build-release
 
 #=============================================================================
+# Target rules for target CMakeFiles/fire.dir
+
+# All Build rule for target.
+CMakeFiles\fire.dir\all:
+	$(MAKE) -f CMakeFiles\fire.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\fire.dir\depend
+	$(MAKE) -f CMakeFiles\fire.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\fire.dir\build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=C:\Users\A-ron\Desktop\184\Final\fire\cmake-build-release\CMakeFiles --progress-num=1,2,3 "Built target fire"
+.PHONY : CMakeFiles\fire.dir\all
+
+# Include target in all.
+all: CMakeFiles\fire.dir\all
+
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+CMakeFiles\fire.dir\rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\A-ron\Desktop\184\Final\fire\cmake-build-release\CMakeFiles 3
+	$(MAKE) -f CMakeFiles\Makefile2 /nologo -$(MAKEFLAGS) CMakeFiles\fire.dir\all
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\A-ron\Desktop\184\Final\fire\cmake-build-release\CMakeFiles 0
+.PHONY : CMakeFiles\fire.dir\rule
+
+# Convenience name for target.
+fire: CMakeFiles\fire.dir\rule
+
+.PHONY : fire
+
+# clean rule for target.
+CMakeFiles\fire.dir\clean:
+	$(MAKE) -f CMakeFiles\fire.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\fire.dir\clean
+.PHONY : CMakeFiles\fire.dir\clean
+
+# clean rule for target.
+clean: CMakeFiles\fire.dir\clean
+
+.PHONY : clean
+
+#=============================================================================
 # Special targets to cleanup operation of make.
 
 # Special rule to run CMake to check the build system integrity.

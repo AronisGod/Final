@@ -1,6 +1,23 @@
 //
 // Created by Matthew Nicoletti on 2019-05-07.
 //
+/*  Tasks!!!
+ * Boundary Chacks -- DONE!
+ * Discontinuity corrections -- DONE!
+ * Initialization -- done?!
+ * Fast Marching -- incomplete
+ * test each function individually -- incomplete
+ * Apply epsh & epsf correctly-- incomplete
+ * what is M variable? -- incomplete
+ * improve temperature falloff e.g. see equation (17) in primary paper
+ * more??
+ *
+ * Future:
+ * New initial environments
+ * Smoke
+ * Parallelize via/or/and GPU utilization
+ */
+
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -22,6 +39,7 @@ using namespace std;
 
 const double INF = numeric_limits<double>::infinity();
 
+enum environment {empty, cylinder};
 
 class Fire {
 private:
@@ -30,6 +48,7 @@ private:
     int NNN; // N*N*N for OCD micro-optimization
     double dt; // size of time steps
     double h; // Grid cell edge length
+    environment env; // Initialized environment (Fuel Source, initial fields)
 
     // Physical Processes Parameters
     double M;
@@ -52,7 +71,7 @@ private:
     // Indexed into as [i*N*N + j*N + k]
     vector<double> grid; // grid at current time step
     vector<double> newGrid; // grid at next time step
-    vector< array<double, 3>* > gridNorm; // The normalized gradient field of the grid at current time step
+    vector< array<double, 3> > gridNorm; // The normalized gradient field of the grid at current time step
 
     // Pressure field p & Coefficient matrix A used in Conjugate Gradient solver for p
     VectorXd p;
@@ -78,6 +97,12 @@ private:
     // Temperature field
     vector<double> T;
 
+    // Environment Restrictions
+    vector<double> envR;
+
+    // Eigen Conjugate Gradient Solver for poissonPressure() --> finds pressure field from divergence of Velocity
+    ConjugateGradient<SparseMatrix<double>, Lower|Upper, IncompleteCholesky<double, Lower|Upper>> cg;
+
 public:
     //Constructor
     Fire();
@@ -89,7 +114,7 @@ public:
 
     void advect();           // Advection
 
-    void poissonPressure();  // Calculates pressure field which upholds incompressibility
+    void poissonPressure();  // Calculates pressure field whose Laplacian is proportional to divergence of Velocity
 
     void applyPressure();    // Applies the newly found pressure field to update our final velocity of the step
 
@@ -97,7 +122,7 @@ public:
 
     void step();             // Calculates one entire frame
 
-    // Sub calculations
+    // Sub Calculations
     array<double, 3> edge(int n, int dn); // Returns correction to velocity at n + dn if it crosses the reaction boundary
 
     Vector3d vort(int i, int j, int k);    // Returns the curl of Velocity at grid index n AKA the vorticity
@@ -105,6 +130,9 @@ public:
     void updateVCenter();    // Updates Velocity field defined at cell centers
 
     void buildA();           // Constructs the coefficient matrix used to find pressure field via Conjugate Gradient
+
+    // Initial Environments
+    void initCylinder(double vIn, double R);   // Disk shaped fuel injector of radius R (m) & injection speed vIn (m/s)
 
     // Helper Functions
     double triLerp(int x, int y, int z, double dx, double dy, double dz, vector<double> &arr, array<double, 8>* = NULL); // Tri-linear Interpolation

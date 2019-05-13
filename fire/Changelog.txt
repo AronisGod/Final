@@ -14,4 +14,14 @@
 	*Modified "advect()" to instead update all velXYZ & Y at the same time
 	+added a structure holding the grid normalized gradients at every cell called gridNorm
 	+created data structure holding discontinuity corrections to pass into Trilerp
+
+5/11/19 -- Aron
+	+Created Boundary Checks (Maintianing 0 Velocity at world edges etc.)
+	+Added a clamp on the maximum allowed velocity
+	+Included all required correction terms where discontinuities arise
+
+5/12/19 -- Aron
+	+Finished the Constructor
+	+Included an environment initialization function (creates a style of fuel injection)
+		and also sets flags in other functions to maintain source terms
 	

@@ -7,9 +7,11 @@
 Fire::Fire() {
     N = 160;
     NNN =  N*N*N;
+    dt = 1 / 1200; // (s) size of time steps for front propagation. Fluids are updated with 5*dt
     h = 0.05; // (m) grid spacing
-    vMax = 30;  // (m/s) cap on velocity magnitude
-    dt = h / vMax / 2; // (s) size of time steps for front propagation. Fluids are updated with 5*dt
+    env = environment::empty; // default environment
+
+    vMax = h / dt / 2;  // (m/s) cap on velocity magnitude -- dt=1/1200 --> vMax=30
     S = 0.1; // (m/s) Parameter controlling velocity of front propagation(Combustion/Reaction Rate)
     Tair = 300; // (K) temperature of ambient environment
     alpha = 0.15; // (m/Ks^2)positive constant
@@ -24,19 +26,15 @@ Fire::Fire() {
     Tmax = 2253;  // (K) Maximum temperature
     C = S*(pf/ph - 1); // Correction for velocity discontinuity at implicit surface
 
+    buildA();
+    cg.compute(A);
+
     for (int n = 0; n < NNN; n++)
-        gridNorm.push_back(new array<double, 3>);
-
-    for (int n = 0; n < (int)pow(N+1, 3); n++){
-        grid.push_back(INF);
-        newGrid.push_back(INF);
-
-    }
+        gridNorm.push_back({0, 0, 0});
 }
 
 
 void Fire::step() {
-
     propagateFront();
 
     addForce();
@@ -50,14 +48,20 @@ void Fire::step() {
     updateVCenter();
 
     updateT();
+
+    velNewX.swap(velX);
+    velNewY.swap(velY);
+    velNewZ.swap(velZ);
+    newY.swap(Y);
+    newGrid.swap(grid);
 }
 
 
 void Fire::buildA() {
     p = VectorXd(NNN);
     A = SparseMatrix<double>(NNN, NNN);
-    typedef Triplet<double> T;
-    vector<T> list;
+    typedef Triplet<double> Trip;
+    vector<Trip> list;
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
@@ -82,6 +86,13 @@ void Fire::propagateFront() {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
                 int n = i*N*N + j*N + k*N;
+
+                if (env == cylinder && k <= envR[1]) {
+                    double r = pow(i-N/2, 2) + pow(j-N/2, 2) - envR[0];
+                    gridNorm[n] = {0, 0, 0};
+                    if (r < 0 && r > -1) continue;
+                }
+
                 double nx, ny, nz;
                 // components of the gradient
                 if      (i == 0)   nx = (grid[n + N*N] - grid[n])*2;
@@ -101,7 +112,7 @@ void Fire::propagateFront() {
                 ny = ny / Norm;
                 nz = nz / Norm;
 
-                *gridNorm[n] = {nx, ny, nz};
+                gridNorm[n] = {nx, ny, nz};
 
                 double w1, w2, w3;
 
@@ -134,6 +145,13 @@ void Fire::addForce() {
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
+
+                if (env == cylinder) {
+                    if (k <= envR[1] && pow(i - N / 2, 2) + pow(j - N / 2, 2) < envR[0]) {
+                        continue;
+                    }
+                }
+
                 int n = i*N*N + j*N + k;
                 // compute forces
                 //buoyancy
@@ -169,6 +187,12 @@ void Fire::advect() {
                 // we divide by "h" to get units of 'cells / time'
                 // go backwards along characteristic flow line
                 // --to first order this means to backwards along the velocity field
+                if (env == cylinder) {
+                    if (k <= envR[1] && pow(i - N / 2, 2) + pow(j - N / 2, 2) < envR[0]) {
+                        continue;
+                    }
+                }
+
                 int n = i*N*N + j*N + k;
                 float newI = i - dt * velX[n] / h;
                 float newJ = j - dt * velY[n] / h;
@@ -201,7 +225,8 @@ void Fire::advect() {
                 velNewX[n] = triLerp(x, y, z, dx, dy, dz, velX, &corrections[0]);
                 velNewY[n] = triLerp(x, y, z, dx, dy, dz, velY, &corrections[1]);
                 velNewZ[n] = triLerp(x, y, z, dx, dy, dz, velZ, &corrections[2]);
-                newY[n]    = triLerp(x, y, z, dx, dy, dz, Y) - dt*k;
+                if (newGrid[n] > 0) newY[n] = 1;
+                else newY[n] = triLerp(x, y, z, dx, dy, dz, Y) - dt*k;
             }
         }
     }
@@ -215,7 +240,7 @@ array<double, 3> Fire::edge(int n, int dn) {
     else if (grid[n + dn] > 0) on = 1;                    // conditions for surface jumps
 
     if (!on) return {0,0,0};
-    array<double, 3> temp = *gridNorm[n + dn];
+    array<double, 3> temp = gridNorm[n + dn];
     for (int l = 0; l < 3; l++) temp[l] = temp[l]*on*C;
     return temp;
 }
@@ -230,6 +255,14 @@ void Fire::poissonPressure() {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
                 int n = i*N*N + j*N + k;
+
+                if (env == cylinder) {
+                    if (k <= envR[1] && pow(i - N / 2, 2) + pow(j - N / 2, 2) < envR[0]) {
+                        b(n) = 0;
+                        continue;
+                    }
+                }
+
                 uDiv = 0;
                 // Divergence Velocity Field
                 //Sum of (u_n+1 - u_n) for n(={x, y, z}
@@ -245,9 +278,9 @@ void Fire::poissonPressure() {
                     int dn = (int) pow((float) N, 2 - B);
                     if (n + dn > N-1) continue;
                     if (grid[n] > 0 && grid[n + dn] <= 0)
-                        uDiv += C * (*gridNorm[n + dn])[B];
+                        uDiv += C * gridNorm[n + dn][B];
                     else if (grid[n] <= 0 && grid[n + dn] > 0)
-                        uDiv += -C * (*gridNorm[n + dn])[B];
+                        uDiv += -C * gridNorm[n + dn][B];
                 }
 
                 uDiv = uDiv * c;
@@ -256,10 +289,6 @@ void Fire::poissonPressure() {
             }
         }
     }
-    buildA();
-    ConjugateGradient<SparseMatrix<double>, Lower|Upper, IncompleteCholesky<double, Lower|Upper>> cg;
-    cg.compute(A);
-
     p = cg.solve(b);
     std::cout << "#iterations:     " << cg.iterations() << std::endl;
     std::cout << "estimated error: " << cg.error()      << std::endl;
@@ -271,6 +300,13 @@ void Fire::applyPressure() {
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {
+
+                if (env == cylinder) {
+                    if (k <= envR[1] && pow(i - N / 2, 2) + pow(j - N / 2, 2) < envR[0]) {
+                        continue;
+                    }
+                }
+
                 int n = i*N*N + j*N + k;
                 if (newGrid[n] > 0) rho = pf;
                 else rho = ph;
@@ -320,15 +356,15 @@ void Fire::updateVCenter() {
 
 
 void Fire::updateT() {
-    for (int n = 0; n < N*N*N; n++) {
+    for (int n = 0; n < NNN; n++) {
         // Builds velC vectors out of the vel vectors
         double Y = newY[n];
-        if (0.9 < Y && Y < 1.0)
-            T[n] = Tignition + (1 - Y) * (Tmax - Tignition) / 0.1;
-        else if (Y < 0.9)
+        if (Y == 1)
             T[n] = Tignition;
+        else if (0.9 < Y && Y < 1.0)
+            T[n] = 10*((Y - 0.9)*Tignition + (1 - Y)*Tmax);
         else
-            T[n] = Tignition + (1 - Y) * (Tmax - Tignition) / 0.1 + (1 - Y) * (1 - Y);
+            T[n] = Tmax*exp(10*Y-9) + Tair*(1-exp(10*Y-9));
     }
 }
 
@@ -385,4 +421,43 @@ double Fire::triLerp(int x, int y, int z, double dx, double dy, double dz, vecto
               (1 - dx) * dy       * dz       * (arr[n + N + 1]       + (*Cor)[3]) +
 
               dx       * dy       * dz       * (arr[n + N*N + N + 1] + (*Cor)[7]);
+}
+
+void Fire::initCylinder(double vIn, double R) {
+    env = cylinder;
+    double numCells = pow(h/R,2); // (cells) Radius squared of injector disk
+    double H = 2; // (cells) Height of injector disk
+    double r;
+    envR.push_back(numCells);
+    envR.push_back(H);
+    envR.push_back(vIn);
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            for (int k = 0; k < N; k++) {
+                int dist = H - k;
+                r = pow(i-N/2, 2) + pow(j-N/2, 2) - numCells;
+                if (dist > -3 && r < 0) {
+                    if (dist > -1 && r > -1) {grid.push_back(0); newGrid.push_back(0);}
+                    else {grid.push_back(dist*h); newGrid.push_back(-INF);} // Sets Initial surface values inside
+
+                    if (dist >= 0) {velZ.push_back(vIn); Y.push_back(1.0); T.push_back(Tignition);}
+                    else {velZ.push_back(0); Y.push_back(0); T.push_back(Tair);}
+                }
+                else {
+                    grid.push_back(-INF);
+                    newGrid.push_back(-INF);
+                    velZ.push_back(0);
+                    Y.push_back(0);
+                    T.push_back(Tair);
+                }
+                velX.push_back(0);
+                velY.push_back(0);
+            }
+        }
+    }
+    velNewX = velX;
+    velNewY = velY;
+    velNewZ = velZ;
+    newY = Y;
 }

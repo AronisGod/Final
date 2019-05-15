@@ -1,6 +1,6 @@
 html {
 	margin: 0px;
-  background-color: #a53504;
+  background-color: #f9bd63;
   width: 100%;
   min-width: 550px;
   min-height: 700px;
@@ -55,7 +55,7 @@ h5 {
 }
 
 p {
-  font-family: 'Julius Sans One', sans-serif;
+  font-family: 'Work Sans', sans-serif;
 	font-size: 18px;
   color: #000000;
   font-weight: lighter;

@@ -1,99 +1,176 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
+  <script type="text/javascript"
+  src="LaTeXMathML.js">
+  </script>
 <style>
-    div.padded {
-      padding-top: 0px;
-      padding-right: 100px;
-      padding-bottom: 0.25in;
-      padding-left: 100px;
-    }
-  </style>
-<title>Aron Lloyd |  CS 184</title>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Final Project</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
 </head>
+
+
 <body>
-<br>
-<h1 align="middle">Fire and the Flames</h1>
-    <h2 align="middle">Team :</h2>
-    <h2 align="middle">Matthew Nicoletti, Jarod Kong, Aron Lloyd</h2>
-    >
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2019</h1>
+<h1 align="middle">Final Project: Fire Simulator</h1>
+<h2 align="middle">Matthew Nicoletti, Jarod Kong, Aron Lloyd <h2>
+
+<br><br>
+
+<h2>
+  Abstract
+</h2>
+  <p> <i>
+    The main goal of this project was to attempt to experiment with new ways of simulating
+    fire. State of the art fire simulations implement numerical integration of the PDEs
+    that govern the motion and temperature of various gaseous substances involved in
+    combustion, as well as highly sophistocated ray tracing techniques in order to
+    properly render the fire. Our method allows a real-time simulation of fire
+    using a randomized propagation method. The model we use is reminiscent of
+    (and inspired by) interacting particle systems and random interface growth models from
+    probability theory and statistical mechanics.
+    </i>
+  </p>
 
 
-    <div class="padded">
-    <h2 align="middle">Summary</h2>
-      <p>  The goal of our project is to make a simulation of fire that is as realistic as possible.
-        We plan to study and use the generic method of physically modeling a system of interacting particles in order to acheive this,
-        which involves solving the relevant PDEs numerically in order to predict the dynamics of the system.
-        We also hope to explore other alternatives to a physically based rendering -- in particular we may try to exploit
-        the dynamics exhibited by certain simplified probabilistic models in their "scaling limits", in order to
-        render fire in a way that is not physically based but is visually appealing.</p>
-    <h2 align="middle">Background and Problem Description</h2>
-      <p>The phenomenon of fire, like most natural processes, can be complicated to describe and intricate geometrically. Thus, if one wants to
-         render convincing looking fire on a computer graphics display, a non-trivial approach must be adopted. In general, fluid dynamics are described by the
-         Navier-Stokes equations. As analytically solving Navier-Stokes is intractable, numerical methods are generally used to integrate the PDE.
-         We believe that similar techniques will need to be used for fire simulation, although the dynamics may be more complicated.
-         Additionally, a traditional mesh would be inefficient to modulate in time in accordance with the dynamics of the system, thus we must caste the solution
-         into a more suitable framework.</p>
-         <p>As mentioned in the summary, we may try a different method to integrate the PDE governing the dynamics of the system. 
-           There are probabilistic models from statistical mechanics which are closely related to systems of interacting particles, 
-           such as ASEP (Asymmetric Simple Exclusion Process), that exhibit "universal" behavior in their 
-           thermodynamic limits. This, very roughly, means that the limiting dynamics of certain simple and solvable models
-          are closely related to the dynamics of much more complicated (intractable) models. Furthermore,
-          if we can find a model whose dynamics are governed by the same PDE as fire, then it is possible that by perturbing it slightly
-          and then simulating this perturbed model and rendering it in a certain way we could get something which looks a lot like fire.
-          This technique, although difficult, would very much be in the spirit of the course, as these models of statistical mechanics usually involve
-          a lattice that approximates a continuous domain in some scaling limit, which is very reminiscint of all of the techniques
-          used in graphics to approximate smooth surfaces and objects with discrete data.
-         </p>
 
-      <h2 align="middle">Goals and Delivarbles</h2>
-        <p>Our central goal for the project is to create a very realistic simulation of fire. We propose to first implement an engine to simulate the dynamics of combustion.
-          We will investigate primarily 2, but possibly other,
-           established techniques of doing this. We will numerically calculate the solutions to PDEs 
-           which describe the motion of gaseous densities, thus giving us a description of fire to display with a rendering engine.
-           We expect that along the way we will generally be challenged to understand
-           the theoretical frameowork for modeling fire, and that also we will run into many difficulties related to 
-           the numerical integration of PDEs, as this is generally a very tricky thing to do.
-           To measure the quality of the system we will observe the smoothness and fluidity of the simulation and compare it to real fire.
-           Our base deliverable would be a simple video showing our simulation along with a high level overview of the math behind it,
-           as well as the essential aspects of our implementation. We expect that obtaining a simulation that runs with 
-           reasonable efficiency will be a difficult task. If we can obtain something that can be rendered in real time, that would 
-           be a major success for the project.
-            
-           </p>
-        <p>If we are exceptionally fast, we hope to explore the probabilistic method. Also, we hope to try to
-           create an applet with a simple user interface that can be used to display our simulation in an interactive way.
-           We could have the user click the screen start a fire, and then they could watch it burn or maybe even (if we 
-           are even more ambitious) spread across a room.
-          Other aspirations we have include implementing refraction from the heat against a background, and modeling the spread of fire so that
-           our simulation is not purely stationary.
+  <h2>
+    Technical approach
+  </h2>
+  <h3> Background </h3>
+    <p>
+      Although our method ultimately was conceptually completely different,
+      our group studied one of the most popular fire simulation methods
+      to date, known as the level set method
+       (cite Stam's stable fluids, and Stanford "physbam" people). For
+      completeness, we outline the key steps in the method here.
+    </p>
+    <p>
+      The simulation
+      uses a 3-dimensional $N \times N \times N$ grid of voxels, embedded in world space
+      with spacing $h$ between the centers
+      of the grid-faces. The algorithm keeps track of the level set function, $\phi$,
+      the pressure, $p$, and the temperature $T$ at the centers
+      of the voxels. The algorithm also keeps track of velocity fields and densities
+      for two different substances -- the fuel (inside the burning fire),
+      and the hot gaseous products (in the ambient air).
+      The main idea is to update the function $\phi$ so that the interface between
+      the two different substances (ie the two dimensional surface
+      which is the outer boundary of the flame) is given by the level set
+      $\phi = 0$.
+    </p>
+    <p>
+      Thus, at each step of the algorithm the function $\phi$ is
+      updated so that the level surface propogates correctly,
+      and also such that it, at least approximately,
+       satisfies the property $| \nabla \phi | = 1$. Further,
+      for both the fuel and the hot gasses the algorithm
+      updates the velocity and pressure fields so as to ensure that each
+      substance separately satisfies its own set of incompressible navier stokes equations
+      $\nabla \cdot u =0$,
+      $ d/dt (u) = -(u \cdot \nabla) u - \nabla p / \rho + f$,
+      where here $u$ is the velocity field, $u \cdot \nabla$ is applied
+      to each component of $u$ separately, $p$ is the pressure, and $f$ is
+      the external force.
 
-        </p>
-    <h2 align="middle">Schedule</h2>
-      <p> Week 1: Finish assignment 4, and decide whether to use this project as skeleton code for our fire simulation.
-          Also in week 1, we plan to read relevant references on the subject and study existing implementations.
+    </p>
+
+    <p>
+      The external forces are added directly
+      via a first order Euler update, and one of the forces is for vorticity,
+     which is responsible for the curling effect (ie the formation of
+     small vortices) one can observe in real fire. The advection term $(u \cdot \nabla) u$
+    is integrated out using the method of characteristics, which generally can
+    be used to integrate advection equations of the type
+    $d/dt (a) = (v \cdot \nabla) a$ for some velocity field
+    $v$ and some function $a$ of space and time. Roughly, the idea is that
+    along integral curves of the velocity field the function $a$ will be constant,
+    so to set $a(t + d t, x, y, z)$, one must
+    follow the velocity field back in time over time span of $dt$,
+    say to some point $(x', y', z')$ and then set
+    $a(t + dt, x, y, z) = a(t, x, y, z)$. See (Cite Stam) for details. Once we do
+    this for each component of the velocity $u$, the
+    resulting field must be projected down to its divergence free part in order
+    to satisfy incompressibility, and to accomplish this one must solve a poisson type
+    boundary value problem for the pressure. The generic methods for doing this involve
+    approximating the continuous Laplacian with a discrete graph Laplacian and
+    using a fast linear solver to solve the resuling (sparse) linear system.
       </p>
-      <p> Week 2: We hope to try to have a prototype of a working simulation.
-      </p>
-      <p> Week 3: Refine the simulation, experiment with parameters to tune, possibly experiment with an alternative
-        method of implementation.
-      </p>
-      <p> Week 4: We leave our "hopes" for this week. In particular, during this week we hope to write
-        an applet that has a simple user interface with which we could display our simulation. We also hope to
-        be able to simulate fire in 3D environment, and to be able to capture the visual effect of "mirage"
-        or "heat haze", which occurs because the temperature gradient in the air is high,
-        causing light to bend in unusual ways.
-      </p>
+      <p>
+        Another important idea is that due to a discontinuity in the velocity field
+        nearby the boundary, care must be taken when performing the above steps
+        at points near the interface. For example, if at some grid position $(i, j, k)$
+        in the fuel region I am updating the velocity, the fuel velocities are
+        what should be used, but some
+        of the neighbors of $(i, j, k)$ may be in the gaseous product region. Thus,
+        at these points <i>ghost values</i> of the fuel velocity must be used. Formulas
+        for what these ghost values should be can be derived from first principles.
+    </p>
 
-    <h2 align="middle">Resources</h2>
-      <ol>
-        <li>http://physbam.stanford.edu/~fedkiw/papers/stanford2002-02.pdf</li>
-        <li>http://physbam.stanford.edu/~fedkiw/papers/stanford2003-11.pdf</li>
-        <li>Assignment 4 as a baseline</li>
-      </ol>
 
-</div>
+
+  <h3>
+    Our simulation algorithm
+  </h3>
+
+    <p>
+      In order to better understand the algorithm, the shader and texture need to be explained first. The WebGL fragment shader colors our texture by taking a weighted sum of the neighbors' color. This allows the texture to mimic fire by having a more pronounced color on the edges while  the center becomes a lot brighter and whiter. The way the N x N texture is populated for the WebGL shader was by using a pixel N x N array. This pixel array determines whether to color a particular location on the texture depending if its value is 0 (off) or 255 (on). This means that in order to simulate our fire animation, the only thing that needs to be modified is the pixel array. 
+    </p>
+    <p>
+      The mutate step works as follows: at particular point in the pixel array, check its status. For each of its neighbors (up, down, left, right), check if they are the opposite. If so, switch the pixel to the opposite status based on a probalility determined by a set of parameters along with a small nudge of randomness. The parameters that determine the probability are <b>Ratio:</b> the main parameter in determining the probability that the pixel will switch, <b>Speed:</b> how fast the fire grows, and <b>Vertical:</b> helps the fire grow up by boosting the probability when checking the neighbor below. 
+    </p>
+    <p>
+      For all the algorithms in the probabilistic implementation, each update step works by calling the mutate function on two groups. The two groups are determined such that each location is not neighbors with any in the same group. This is because each pixel is mutated based on the value of its neighbors, so the two step update prevents previous results from affecting future ones.
+    </p>
+    <p>
+      In order to improve our fire simulation, we attempted to add smoke. This involved updating the fragment shader and the mutate step. In the fragment shader, we placed a barrier around the fire such that if a pixel were to be turned on outside of it, the color would be grey.
+    </p>
+
+    <h3>
+      Problems encountered
+    </h3>
+    <p> Lacks vorticity. Trying to get vorticity (super hard, messes up the system) </p>
+
+    <h3>
+      What we learned
+    </h3>
+
+    <p>  jjjjj </p>
+
+  <h2>
+    Results
+  </h2>
+    <p>
+      In order to achieve the best looking fires, we had to test several different combinations of the parameters. 
+    </p>
+
+  <h2>
+    References
+  </h2>
+    <p>
+      
+    </p>
+  <h2>
+    Contributions
+  </h2>
+    <p>
+      
+    </p>
+
 </body>
 </html>

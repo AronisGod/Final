@@ -190,79 +190,11 @@
           <source src="shistuff/vads/blowup.mov"/>
         </video>
 
-            <h5 class = subsection2 align="middle">Simulation Steps</h4>
-        <div id = "stuff">
-            <div class="terms">
-                <h4 class="title">Front Propagation</h2>
-                <p class="details">
-                  The first step in each frame is to move forward the reaction boundary. This is done with a simple 1st order equation.
-
-                  $$\phi_t = -\vec{w}\cdot\nabla\phi$$
-                  <b>Numerically</b> this looks like:
-                  $$\phi^{new}=\phi^{old}-\Delta(w_1\phi_x+w_2\phi_y+w_3\phi_z)$$
-                  $$\text{Where: }\vec{w}\equiv(V_f + S)\hat{n}$$
-                  Here, <b>\(V_f\)</b> is the velocity of fuel vapor, normal to the surface. <b>S</b> is the reaction velocity.
-              </p>
-              <div class="pic"><img src="assets/img/pressure.png"></div>
-            </div>
-
-            <div class="terms">
-                <h4 class="title">Buoyancy/Gravity</h2>
-                <p class="details">
-                  $$F_{buoy}=\alpha(T-T_{air})\hat{z}$$
-                  $$F_{grav}$$
-                </p>
-                <div class="pic"><img src="assets/img/advection.png"></div>
-            </div>
-
-            <div class="terms">
-                <h4 class="title">Vorticity</h2>
-                <p class="details">
-
-                  We have separate termss for each of the slabs in order to produce more customized visualizations.
-                </p>
-                <div class="pic"><img src="assets/img/impulse.png"></div>
-            </div>
-
-            <div class="terms">
-                <h4 class="title">Advection</h2>
-                <p class="details">
-                  The buoyancy terms applies a force along the vertical axis. This is where the temperature slab comes into play.
-
-                $$f_{buoy} = (-\kappa d + \sigma (T - T_0))\mathbf{\hat{j}}$$
-
-                </p>
-            </div>
-
-            <div class="terms">
-                <h4 class="title">Pressure Gradient</h2>
-                <p class="details">
-
-                  $$\Psi = \frac{\eta }{|\eta|}, \eta = \nabla |\omega|, \omega = \nabla \times \mathbf{u}$$
-
-                  Afterwards, we apply the restorative force
-
-                  $$f_{vc} = \varepsilon (\Psi \times \omega) \delta x$$
-                </p>
-
-            </div>
-
-            <div class="terms">
-                <h4 class="title">BOUNDARY CONDITIONS</h2>
-                <p class="details">
-
-                  $$\frac{\mathbf{u}_{0,j}+\mathbf{u}_{1,j}}{2}=0,\mathrm{for}j\in[0, N]$$
-                  $$\frac{\mathbf{p}_{1,j}-\mathbf{p}_{0,j}}{\delta x}=0$$
-
-                </p>
-            </div>
-
-            <a id="prev">&#9664;</a>
-            <a id="next">&#9654;</a>
-        </div>
 
 
-            <h2 class="subsection" align="middle">Gems of Knowledge</h2>
+
+
+            <h2 class="subsection" align="middle">What we learned</h2>
 
             <p class="info">
               One thing we learned is that in these random systems simplicity
@@ -270,7 +202,15 @@
               vorticity, in a very rough sense, added too much complexity into the system,
               disrupting its stability. The model which looked the most like fire
               was the simplest one with only the basic particle propogation rules.
+              Making a probabilistic model such that there is a stationary distribution where
+              something interesting happens is a subtle thing.
              </p>
+
+             <p class="info">
+               We also learned a lot about fluid dynamics, interacting particle systems,
+               WebGL, and methods of integrating differential equations (such as the
+               method of characteristics for Burgers type equations).
+              </p>
 
         <div id="results">
             <h2 class="subsection" align="middle">Results</h2>
@@ -319,6 +259,7 @@
         </div>
 
         <h2 class="subsection" align="middle">Extras</h2>
+          <h3 class="subsection" align="middle">Lightning</h3>
         <p class="info">
         As a part of our exploration of using random systems to generate
         dynamics for physical processes, we experimented with simulations
@@ -343,6 +284,79 @@
         controls>Your browser does not support the &lt;video&gt; tag.
          <source src="lightning.mov"/>
        </video>
+
+       <h3 class="subsection" align="middle">Simulation steps of the Physically based Model
+         </h3>
+
+       <div id = "stuff">
+           <div class="terms">
+               <h4 class="title">Front Propagation</h2>
+               <p class="details">
+                 The first step in each frame is to move forward the reaction boundary. This is done with a simple 1st order equation.
+
+                 $$\phi_t = -\vec{w}\cdot\nabla\phi$$
+                 <b>Numerically</b> this looks like:
+                 $$\phi^{new}=\phi^{old}-\Delta(w_1\phi_x+w_2\phi_y+w_3\phi_z)$$
+                 $$\text{Where: }\vec{w}\equiv(V_f + S)\hat{n}$$
+                 Here, <b>\(V_f\)</b> is the velocity of fuel vapor, normal to the surface. <b>S</b> is the reaction velocity.
+             </p>
+             <div class="pic"><img src="assets/img/pressure.png"></div>
+           </div>
+
+           <div class="terms">
+               <h4 class="title">Buoyancy/Gravity</h2>
+               <p class="details">
+                 $$F_{buoy}=\alpha(T-T_{air})\hat{z}$$
+                 $$F_{grav}$$
+               </p>
+               <div class="pic"><img src="assets/img/advection.png"></div>
+           </div>
+
+           <div class="terms">
+               <h4 class="title">Vorticity</h2>
+               <p class="details">
+
+                 We have separate termss for each of the slabs in order to produce more customized visualizations.
+               </p>
+               <div class="pic"><img src="assets/img/impulse.png"></div>
+           </div>
+
+           <div class="terms">
+               <h4 class="title">Advection</h2>
+               <p class="details">
+                 The buoyancy terms applies a force along the vertical axis. This is where the temperature slab comes into play.
+
+               $$f_{buoy} = (-\kappa d + \sigma (T - T_0))\mathbf{\hat{j}}$$
+
+               </p>
+           </div>
+
+           <div class="terms">
+               <h4 class="title">Pressure Gradient</h2>
+               <p class="details">
+
+                 $$\Psi = \frac{\eta }{|\eta|}, \eta = \nabla |\omega|, \omega = \nabla \times \mathbf{u}$$
+
+                 Afterwards, we apply the restorative force
+
+                 $$f_{vc} = \varepsilon (\Psi \times \omega) \delta x$$
+               </p>
+
+           </div>
+
+           <div class="terms">
+               <h4 class="title">BOUNDARY CONDITIONS</h2>
+               <p class="details">
+
+                 $$\frac{\mathbf{u}_{0,j}+\mathbf{u}_{1,j}}{2}=0,\mathrm{for}j\in[0, N]$$
+                 $$\frac{\mathbf{p}_{1,j}-\mathbf{p}_{0,j}}{\delta x}=0$$
+
+               </p>
+           </div>
+
+           <a id="prev">&#9664;</a>
+           <a id="next">&#9654;</a>
+       </div>
 
       </div>
     </body>

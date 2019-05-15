@@ -92,7 +92,7 @@ p {
   width: 180px;
   text-decoration: none;
   font-size: 16px;
-  font-family: 'Assistant', sans-serif;
+  font-family: 'Work Sans', sans-serif;
   font-weight: lighter;
 	color: #61616d;
 }
@@ -127,17 +127,17 @@ p {
 
 #stuff {
   position: relative;
-  top: 550px;
+  top: 300px;
   left: 50%;
   transform: translate(-50%, -50%);
   align-items: center;
   margin: auto;
   width: 1000px;
   display: inline-block;
-  padding-bottom: 80px;
+  padding-bottom: 150px;
 }
 
-.shader {
+.terms {
   position: relative;
   text-align: center;
   margin: auto;

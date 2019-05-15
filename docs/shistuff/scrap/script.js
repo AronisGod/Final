@@ -1,6 +1,6 @@
 $(document).ready(function() {
   let curr = 1;
-  let end = 6;
+  let end = 5;
   display(1);
 
   function display(x) {
@@ -80,14 +80,6 @@ $(document).ready(function() {
     $("#prev").css("opacity", 1);
     $("#next").css("opacity", 1);
     curr = 5;
-    display(curr);
-  });
-
-  $(".dot:eq(5)").click(function() {
-    $(this).addClass("active");
-    $("#prev").css("opacity", 1);
-    $("#next").css("opacity", 1);
-    curr = 6;
     display(curr);
   });
 

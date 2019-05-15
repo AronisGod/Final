@@ -254,11 +254,17 @@
           <source src="shistuff/vads/blowup.mov"/>
         </video>
 
+
         <h2 class="subsection" align="middle">Gems of Knowledge</h2>
         <p class="info">
           One thing we learned is that simplicity can be powerful.
-          With a modest set of update rules, we found the production of clearly distinguishable
-          fiery effects.
+          We conjecture that our attempt at creating
+              vorticity, in a very rough sense, added too much complexity into the system,
+              disrupting its stability. The model which looked the most like fire
+              was the simplest one with only the basic particle propogation rules.
+              Making a probabilistic model such that there is a stationary distribution where
+              something interesting happens is a subtle thing.
+
           Secondly, numerical simulation was new to us (beyond the cloth model). It is amazing that,
           when one captures the essence of a natural system, then takes small enough steps with their
           computation machines along the paths dictated by our approximate equations of dynamics;
@@ -270,6 +276,12 @@
           physically based, 3-dimensional renditions of fire.
         </p>
 
+
+             <p class="info">
+               We also learned a lot about fluid dynamics, interacting particle systems,
+               WebGL, and methods of integrating differential equations (such as the
+               method of characteristics for Burgers type equations).
+              </p>
 
         <div id="results">
             <h2 class="subsection" align="middle">Results</h2>
@@ -321,6 +333,7 @@
         </div>
 
         <h2 class="subsection" align="middle">Extras</h2>
+          <h3 class="subsection" align="middle">Lightning</h3>
         <p class="info">
         As a part of our exploration of using random systems to generate
         dynamics for physical processes, we experimented with simulations
@@ -345,6 +358,10 @@
         controls>Your browser does not support the &lt;video&gt; tag.
          <source src="lightning.mov"/>
        </video>
+
+
+
+
 
       </div>
     </body>

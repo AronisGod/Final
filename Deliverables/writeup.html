@@ -1378,16 +1378,30 @@
        a term in the external force.
     </p>
 
-    <p> We attempted to deal with this, but were not as successful as we hoped.
-      We added a third species of particle into the system. The idea was that
+    <p> In an attempt to deal with this, we added a third species of particle into the system. The idea was that
       this third type of particle would be more rare than the standard "on" and "off"
       particles, but that it would have a small local vortex around it that would
       create a swirling effect in the fire around it. This second species of particle
       propagates upwards like the other fire particles, but it has a smaller
       probability of being introduced into the system at the fuel source at the bottom.
-      Our implementation of the small vortex was to literally rotate all of the particles
-      in some annulus around the center of the vortex in a circle.
+      Our implementation of the effect of the small vortex was to literally
+      rotate in a circle all of the particles inside of a small annular
+      region around the vortex particle.
+
     </p>
+
+    <p> Our change did not quite have the desired effect. In general, the fire
+      looks quite similar, although it overall tends to appear more chaotic. However,
+      occasionally the system reaches some sort of critical point and the fire
+      degenerates and the particles start spreading out far too much and it stops
+      looking like fire altogether. Below we have included two videos to illustrate
+      the result.
+    </p>
+
+  <EMBED SRC="vortex_attempt.mov" WIDTH=240 HEIGHT = 196 AUTOPLAY=true CONTROLLER=true LOOP=false PLUGINSPAGE="http://www.apple.com/quicktime/">
+
+
+    <EMBED SRC=”blowup.mov”>
 
     <h3>
       What we learned

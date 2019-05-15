@@ -6,16 +6,13 @@
         <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
 
         <link href="https://fonts.googleapis.com/css?family=Cinzel|Julius+Sans+One|Press+Start+2P|Work+Sans" rel="stylesheet">
-        <link rel="stylesheet" type="text/css" href="shistuff1/swag/style.css">
+        <link rel="stylesheet" type="text/css" href="shistuff/swag/style.css">
         <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
-            <script src = "shistuff/scrap/scrip1t.js"></script>
+            <script src = "shistuff/scrap/script.js"></script>
 
 
     </head>
-
-
     <body>
-
       <div id="top">
         <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2019</h1>
         <h1 id="title" align="middle">Final Project: Fire Simulator</h2>
@@ -190,58 +187,54 @@
         </div>
         <video class="tab" height="350" width="425" style="display:block; margin: 0 auto; object-fit: inherit;"
          controls>Your browser does not support the &lt;video&gt; tag.
-          <source src="blowup.mov"/>
+          <source src="shistuff/vads/blowup.mov"/>
         </video>
 
-      <h5 class = subsection2 align="middle">Shaders</h5>
+            <h5 class = subsection2 align="middle">Simulation Steps</h4>
         <div id = "stuff">
-            <div class="shader">
+            <div class="terms">
                 <h4 class="title">Front Propagation</h2>
                 <p class="details">
+                  The first step in each frame is to move forward the reaction boundary. This is done with a simple 1st order equation.
+
                   $$\phi_t = -\vec{w}\cdot\nabla\phi$$
-                  <b>Numerically:</b>
+                  <b>Numerically</b> this looks like:
                   $$\phi^{new}=\phi^{old}-\Delta(w_1\phi_x+w_2\phi_y+w_3\phi_z)$$
                   $$\text{Where: }\vec{w}\equiv(V_f + S)\hat{n}$$
-                  Here, <b>w</b> is the velocity with which the front moves.
-
-                $$\mathbf{u}=\mathbf{w}-\nabla p$$
-
+                  Here, <b>\(V_f\)</b> is the velocity of fuel vapor, normal to the surface. <b>S</b> is the reaction velocity.
               </p>
               <div class="pic"><img src="assets/img/pressure.png"></div>
             </div>
 
-            <div class="shader">
+            <div class="terms">
                 <h4 class="title">Buoyancy/Gravity</h2>
                 <p class="details">
-                  Advection handles the directional dissipation of the three information f
-                  $$q(\mathbf{x}, t + \delta t) = q(\mathbf{x} - \mathbf{u}(\mathbf{x}, t) \delta t, t)$$
-
-                  Note that <b>q</b> can represents fluid properties density, velocity, and
+                  $$F_{buoy}=\alpha(T-T_{air})\hat{z}$$
+                  $$F_{grav}$$
                 </p>
                 <div class="pic"><img src="assets/img/advection.png"></div>
             </div>
 
-            <div class="shader">
+            <div class="terms">
                 <h4 class="title">Vorticity</h2>
                 <p class="details">
 
-                  We have separate shaders for each of the slabs in order to produce more customized visualizations.
+                  We have separate termss for each of the slabs in order to produce more customized visualizations.
                 </p>
                 <div class="pic"><img src="assets/img/impulse.png"></div>
             </div>
 
-            <div class="shader">
+            <div class="terms">
                 <h4 class="title">Advection</h2>
                 <p class="details">
-                  The buoyancy shader applies a force along the vertical axis. This is where the temperature slab comes into play.
+                  The buoyancy terms applies a force along the vertical axis. This is where the temperature slab comes into play.
 
                 $$f_{buoy} = (-\kappa d + \sigma (T - T_0))\mathbf{\hat{j}}$$
 
                 </p>
-                <div class="pic"><img src="assets/img/buoyancy.png"></div>
             </div>
 
-            <div class="shader">
+            <div class="terms">
                 <h4 class="title">Pressure Gradient</h2>
                 <p class="details">
 
@@ -252,10 +245,9 @@
                   $$f_{vc} = \varepsilon (\Psi \times \omega) \delta x$$
                 </p>
 
-                <div class="pic"><img src="assets/img/vorticity.png"></div>
             </div>
 
-            <div class="shader">
+            <div class="terms">
                 <h4 class="title">BOUNDARY CONDITIONS</h2>
                 <p class="details">
 
@@ -263,7 +255,6 @@
                   $$\frac{\mathbf{p}_{1,j}-\mathbf{p}_{0,j}}{\delta x}=0$$
 
                 </p>
-                <div class="pic"><img src="assets/img/boundary.png"></div>
             </div>
 
             <a id="prev">&#9664;</a>
@@ -271,7 +262,7 @@
         </div>
 
 
-            <h2 class="subsection" align="middle">What we learned</h2>
+            <h2 class="subsection" align="middle">Gems of Knowledge</h2>
 
             <p class="info">
               One thing we learned is that in these random systems simplicity
@@ -280,6 +271,7 @@
               disrupting its stability. The model which looked the most like fire
               was the simplest one with only the basic particle propogation rules.
              </p>
+
         <div id="results">
             <h2 class="subsection" align="middle">Results</h2>
             <p class="info">
@@ -288,12 +280,12 @@
             <div align="center"><p>Fire with Ratio:0.4, Speed:0.1, Vertical_Ratio:10:</p></div>
             <video class="tab" height="350" width="425" style="display:block; margin: 0 auto; object-fit: inherit;"
                controls>Your browser does not support the &lt;video&gt; tag.
-                <source src="fire_best.mov"/>
+                <source src="shistuff/vads/fire_best.mov"/>
             </video>
             <div align="center"><p>Smoke Simulation Added:</p></div>
             <video class="tab" height="350" width="425" style="display:block; margin: 0 auto; object-fit: inherit;"
              controls>Your browser does not support the &lt;video&gt; tag.
-              <source src="smoke.mov"/>
+              <source src="shistuff/vads/smoke.mov"/>
             </video>
         </div>
 
@@ -310,48 +302,48 @@
         </div>
 
         <div id="contributions">
-          <h2 class="subsection" align="middle">Contributions</h2>
-            <p class="info">
-              <b>Matthew:</b>
-            Helped with development of the WebGL algorithm and attempted to change the mutation step to add vorticity.
-               Experimented with parameters to find the best looking results. Understood papers on physically based simulation
-               techniques. Made lightning simulation as part of further experimentation.
-                Worked on writeup for milestone and final deliverable.
-            </p>
-            <p class="info">
-              <b>Jarod:</b> Primarily worked on WebGL application. Helped with development of algorithm and implemented the smoke changes to the shaders and the mutation steps. Experimented with parameters to find the best looking results. Worked on video production for milestone and final deliverable.
-            </p>
-            <p class="info">
-              <b>Aron:</b>
-            </p>
+          <h2 class="subsection" align"middle">Contributions</h2>
+          <p class="info">
+            <b>Matthew:</b>
+          Helped with development of the WebGL algorithm and attempted to change the mutation step to add vorticity.
+             Experimented with parameters to find the best looking results. Understood papers on physically based simulation
+             techniques. Made lightning simulation as part of further experimentation.
+              Worked on writeup for milestone and final deliverable.
+          </p>
+          <p class="info">
+            <b>Jarod:</b> Primarily worked on WebGL application. Helped with development of algorithm and implemented the smoke changes to the shaders and the mutation steps. Experimented with parameters to find the best looking results. Worked on video production for milestone and final deliverable.
+          </p>
+          <p class="info">
+            <b>Aron:</b>
+          </p>
         </div>
 
-         <h2 class="subsection" align="middle">Extras</h2>
+        <h2 class="subsection" align="middle">Extras</h2>
+        <p class="info">
+        As a part of our exploration of using random systems to generate
+        dynamics for physical processes, we experimented with simulations
+        of lightning. The simulation algorithm is from
+        (<a href="http://gamma.cs.unc.edu/FRAC/laplacian_large.pdf" target="_blank">Fast Simulation of Laplacian Growth</a>),
+        and it is meant to
+        approximate the following situation:
+        Place a small conducting sphere at the origin, and a large
+        concentric positively charged spherical
+        shell around the origin. The surface of the small conductor can expand randomly
+        in any direction, and the distribution of where this expansion happens is proportional
+        to the electric potential at this point. This potential is given by
+        the inverse of the Laplacian operator, or in other words by a greens function,
+        and these small changes in the shape of the conductor can create an
+        unstable feedback loop, which ultimately causes
+        large streaks of the conductor to grow and
+        branch out in a lighting-like way. We implemented the algorithm, and without
+        any processing to make it render nicely, this is our result.
+        </p>
 
+       <video class="tab" height="350" width="425" style="display:block; margin: 0 auto; object-fit: inherit;"
+        controls>Your browser does not support the &lt;video&gt; tag.
+         <source src="shistuff/vads/lightning.mov"/>
+       </video>
 
-             <p class="info">
-               As a part of our exploration of using random systems to generate
-               dynamics for physical processes, we experimented with simulations
-               of lightning. The simulation algorithm is from
-               (<a href="http://gamma.cs.unc.edu/FRAC/laplacian_large.pdf" target="_blank">Fast Simulation of Laplacian Growth</a>),
-                and it is meant to
-                approximate the following situation:
-               Place a small conducting sphere at the origin, and a large
-               concentric positively charged spherical
-               shell around the origin. The surface of the small conductor can expand randomly
-               in any direction, and the distribution of where this expansion happens is proportional
-               to the electric potential at this point. This potential is given by
-               the inverse of the Laplacian operator, or in other words by a greens function,
-               and these small changes in the shape of the conductor can create an
-               unstable feedback loop, which ultimately causes
-               large streaks of the conductor to grow and
-               branch out in a lighting-like way. We implemented the algorithm, and without
-               any processing to make it render nicely, this is our result.
-              </p>
-
-              <video class="tab" height="350" width="425" style="display:block; margin: 0 auto; object-fit: inherit;"
-               controls>Your browser does not support the &lt;video&gt; tag.
-                <source src="lightning.mov"/>
-              </video>
+      </div>
     </body>
 </html>

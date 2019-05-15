@@ -292,9 +292,10 @@
                in any direction, and the distribution of where this expansion happens is proportional
                to the electric potential at this point. This potential is given by
                the inverse of the Laplacian operator, or in other words by a greens function,
-               and small changes in the shape of the conductor can cause large changes to the
-               greens function, which ultimately causes large streaks of the conductor
-               to branch out in a lighting-like way. We implemented the algorithm, and without
+               and these small changes in the shape of the conductor can cause changes to the
+               greens function that make it unstable, which ultimately causes
+               large streaks of the conductor to grow and
+               branch out in a lighting-like way. We implemented the algorithm, and without
                any processing to make it render nicely, this is our result.
               </p>
 
@@ -315,6 +316,8 @@
         <div id="resources">
           <h2 class="subsection" align="middle">References</h2>
           <p align="middle"><a href="http://physbam.stanford.edu/~fedkiw/papers/stanford2002-02.pdf" target="_blank">Physically Based Model and Animation of Fire</a></p>
+          <p align="middle"><a href="http://www.dgp.toronto.edu/people/stam/reality/Research/pdf/ns.pdf" target="_blank">Stable Fluids</a></p>
+            <p align="middle"><a href="http://gamma.cs.unc.edu/FRAC/laplacian_large.pdf" target="_blank">Fast Simulation of Laplacian Growth</a></p>
         </div>
 
         <div id="contributions">

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -105,6 +106,7 @@
                 for what these ghost values should be can be derived from first principles.
             </p>
             <p class="info">
+                As previously stated, the method we used was completely different.
                 One possible way to view the system we have created is as a perturbed
                 discrete time version of two-dimensional ASEP. ASEP is a continuous time
                 Markov chain which can be thought of as a simplified model for traffic flow
@@ -134,8 +136,9 @@
             </p>
             <p class="info">
               The mutate step works as follows: at particular point in the pixel array, check its status. For each of its neighbors
-              (up, down, left, right), check if they are the opposite. If so, switch the pixel to the opposite status based on a probalility
-              determined by a set of parameters along with a small nudge of randomness. The parameters that determine the probability are
+              (up, down, left, right), check if they are the opposite. If so, switch the pixel to the opposite status by
+              flipping a biased coin. The coin bias depends on whether the neighbor is below or above or adjacent to the pixel.
+              The parameters that determine the coin bias are
               <b>Ratio:</b> the main parameter in determining the probability that the pixel will switch, <b>Speed:</b> how fast the fire grows,
               and <b>Vertical:</b> helps the fire grow up by boosting the probability when checking the neighbor below.
             </p>
@@ -284,4 +287,4 @@
             </p>
         </div>
     </body>
-</html>
+=</html>

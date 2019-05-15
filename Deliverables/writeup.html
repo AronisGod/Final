@@ -36,7 +36,7 @@
 
         <div id="approach">
           <h2 class="subsection" align="middle">Technical approach</h2>
-          <h3 class="subsection2" algin="middle">Background</h3>
+          <h3 class="subsection2" align="middle">Background</h3>
             <p class="info">
               Although our method ultimately was conceptually completely different,
               our group studied one of the most popular fire simulation methods
@@ -107,7 +107,7 @@
 
 
 
-            <h3 class="subsection2" algin="middle">Our Simulation Algorithm</h3>
+            <h3 class="subsection2" align="middle">Our Simulation Algorithm</h3>
             <p class="info">
               In order to better understand the algorithm, the shader and texture need to be explained first. The WebGL fragment shader colors our
               texture by taking a weighted sum of the neighbors' color. This allows the texture to mimic fire by having a more pronounced color on
@@ -135,21 +135,31 @@
               height, it had a chance to turn on based on the pixels below it within a certain step size. This allowed smoke to propagate up.
             </p>
 
-            <h3 class="subsection2" algin="middle">Tribulations</h3>
+            <h3 class="subsection2" align="middle">Tribulations</h3>
             <p class="info"> One of the central issues with the system is that the simulated fire lacks
                  vortices. In the physically based method, vorticity is accounted for by
                  a term in the external force.
             </p>
 
-            <p class="info"> We attempted to deal with this, but were not as successful as we hoped.
-              We added a third species of particle into the system. The idea was that
+            <p class="info"> In an attempt to deal with this, we added a third species of particle into the system. The idea was that
               this third type of particle would be more rare than the standard "on" and "off"
               particles, but that it would have a small local vortex around it that would
-              create a swirling effect in the fire around it. This second species of particle
+              create a swirling effect in the fire around it. This third species of particle
               propagates upwards like the other fire particles, but it has a smaller
               probability of being introduced into the system at the fuel source at the bottom.
-              Our implementation of the small vortex was to literally rotate all of the particles
-              in some annulus around the center of the vortex in a circle.
+              Our implementation of the effect of the small vortex was to literally
+              rotate in a circle all of the particles inside of a small annular
+              region around the vortex particle.
+            </p>
+
+            <p class="info">
+              Our change did not quite have the desired effect. In general, the fire
+              looks quite similar, although it overall tends to appear more chaotic
+              and a little bit less natural. Another undesirable side affect is that
+              occasionally the system reaches some sort of critical point and the fire
+              degenerates and the particles start spreading out far too much and it stops
+              looking like fire altogether. Below we have included a video to illustrate
+              both of these phenomena.
             </p>
         </div>
 
@@ -232,12 +242,32 @@
             <a id="next">&#9654;</a>
         </div>
 
+            <h2 class="subsection" align="middle">BackGround</h2>
+            <p class="info">One possible way to view the system we have created is as a perturbed
+            discrete time version of two-dimensional ASEP. ASEP is a continuous time
+            Markov chain which can be thought of as a simplified model for traffic flow
+            or interacting particle systems. ASEP is a very simple model, and in
+            one dimesnion it is well known that as the grid mesh approaches a continuum,
+            the dynamics of ASEP are governed by a Burgers type equation, which is similar
+            to the advection equations used to model stable fluids. In
+            ASEP, each grid cell can be either occupied by a particle, or unoccupied, and
+            each particle has an exponentially distributed alarm clock, and when its
+            clock goes off a particle attempts a jump to one of its neighboring squares
+            (say, uniformly at random) and succeeds if no other particle is already there. Otherwise,
+            it stays where it is, and either way it restarts its alarm clock.
+            In our model there are also two types of grid squares, "on" or "off", and each
+            grid square does a random update based only on its neighbors. However, the
+            "off" particles can percolate into the "on" squares and vice versa.</p>
 
-            <h2 class="subsection" algin="middle">The Gem of Knowledge</h2>
+            <video class="tab" height="350" width="425" style="display:block; margin: 0 auto; object-fit: inherit;"
+             controls>Your browser does not support the &lt;video&gt; tag.
+              <source src="blowup.mov"/>
+            </video>
+            <h2 class="subsection" align="middle">The Gem of Knowledge</h2>
 
             <p class="info">  jjjjj </p>
         <div id="results">
-            <h2 class="subsection" algin="middle">Results</h2>
+            <h2 class="subsection" align="middle">Results</h2>
             <p class="info">
               In order to achieve the best looking fires, we had to test several different combinations of the parameters.
             </p>
@@ -249,7 +279,7 @@
         </div>
 
         <div id="contributions">
-          <h2 class="subsection" algin"middle">Contributions</h2>
+          <h2 class="subsection" align"middle">Contributions</h2>
             <p class="info">
 
             </p>

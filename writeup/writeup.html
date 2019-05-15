@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <script type="text/javascript"
+  src="LaTeXMathML.js">
+  </script>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Final Project</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2019</h1>
+<h1 align="middle">Final Project: Fire Simulator</h1>
+<h2 align="middle">Matthew Nicoletti, CS184-adn -- Jarod Kong, ... -- Aron Lloyd, ...</h2>
+
+<br><br>
+
+<h2>
+  Abstract
+</h2>
+  <p> <i>
+    The main goal of this project was to attempt to experiment with new ways of simulating
+    fire. State of the art fire simulations implement numerical integration of the PDEs
+    that govern the motion and temperature of various gaseous substances involved in
+    combustion, as well as highly sophistocated ray tracing techniques in order to
+    properly render the fire. Our method allows a real-time simulation of fire
+    using a randomized propagation method. The model we use is reminiscent of
+    (and inspired by) interacting particle systems and random interface growth models from
+    probability theory and statistical mechanics.
+    </i>
+  </p>
+
+
+
+  <h2>
+    Technical approach
+  </h2>
+  <h3> Background </h3>
+    <p>
+      Although our method ultimately was conceptually completely different,
+      our group studied one of the most popular fire simulation methods
+      to date, known as the level set method
+       (cite Stam's stable fluids, and Stanford "physbam" people). For
+      completeness, we outline the key steps in the method here.
+    </p>
+    <p>
+      The simulation
+      uses a 3-dimensional $N \times N \times N$ grid of voxels, embedded in world space
+      with spacing $h$ between the centers
+      of the grid-faces. The algorithm keeps track of the level set function, $\phi$,
+      the pressure, $p$, and the temperature $T$ at the centers
+      of the voxels. The algorithm also keeps track of velocity fields and densities
+      for two different substances -- the fuel (inside the burning fire),
+      and the hot gaseous products (in the ambient air).
+      The main idea is to update the function $\phi$ so that the interface between
+      the two different substances (ie the two dimensional surface
+      which is the outer boundary of the flame) is given by the level set
+      $\phi = 0$.
+    </p>
+    <p>
+      Thus, at each step of the algorithm the function $\phi$ is
+      updated so that the level surface propogates correctly,
+      and also such that it, at least approximately,
+       satisfies the property $| \nabla \phi | = 1$. Further,
+      for both the fuel and the hot gasses the algorithm
+      updates the velocity and pressure fields so as to ensure that each
+      substance separately satisfies its own set of incompressible navier stokes equations
+      $\nabla \cdot u =0$,
+      $ d/dt (u) = -(u \cdot \nabla) u - \nabla p / \rho + f$,
+      where here $u$ is the velocity field, $u \cdot \nabla$ is applied
+      to each component of $u$ separately, $p$ is the pressure, and $f$ is
+      the external force.
+
+    </p>
+
+    <p>
+      The external forces are added directly
+      via a first order Euler update, and one of the forces is for vorticity,
+     which is responsible for the curling effect (ie the formation of
+     small vortices) one can observe in real fire. The advection term $(u \cdot \nabla) u$
+    is integrated out using the method of characteristics, which generally can
+    be used to integrate advection equations of the type
+    $d/dt (a) = (v \cdot \nabla) a$ for some velocity field
+    $v$ and some function $a$ of space and time. Roughly, the idea is that
+    along integral curves of the velocity field the function $a$ will be constant,
+    so to set $a(t + d t, x, y, z)$, one must
+    follow the velocity field back in time over time span of $dt$,
+    say to some point $(x', y', z')$ and then set
+    $a(t + dt, x, y, z) = a(t, x, y, z)$. See (Cite Stam) for details. Once we do
+    this for each component of the velocity $u$, the
+    resulting field must be projected down to its divergence free part in order
+    to satisfy incompressibility, and to accomplish this one must solve a poisson type
+    boundary value problem for the pressure. The generic methods for doing this involve
+    approximating the continuous Laplacian with a discrete graph Laplacian and
+    using a fast linear solver to solve the resuling (sparse) linear system.
+      </p>
+      <p>
+        Another important idea is that due to a discontinuity in the velocity field
+        nearby the boundary, care must be taken when performing the above steps
+        at points near the interface. For example, if at some grid position $(i, j, k)$
+        in the fuel region I am updating the velocity, the fuel velocities are
+        what should be used, but some
+        of the neighbors of $(i, j, k)$ may be in the gaseous product region. Thus,
+        at these points <i>ghost values</i> of the fuel velocity must be used. Formulas
+        for what these ghost values should be can be derived from first principles.
+    </p>
+
+
+
+  <h3>
+    Our simulation algorithm
+  </h3>
+
+    <p>
+
+    </p>
+
+    <h3>
+      Problems encountered
+    </h3>
+    <p> Lacks vorticity. Trying to get vorticity (super hard, messes up the system) </p>
+
+    <h3>
+      What we learned
+    </h3>
+
+    <p>  jjjjj </p>
+
+  <h2>
+    Results
+  </h2>
+    <p>
+
+    </p>
+
+    <h2>
+      References
+    </h2>
+
+
+</body>
+</html>
